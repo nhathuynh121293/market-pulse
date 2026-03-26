@@ -326,7 +326,7 @@ const RestAPI = {
     for (const url of urls) {
       try {
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 8000); // 8s timeout
+        const timer = setTimeout(() => ctrl.abort(), 5000); // 5s timeout
         const r = await fetch(url, {headers: h, signal: ctrl.signal});
         clearTimeout(timer);
         if (!r.ok) continue;
@@ -679,34 +679,36 @@ function render() {
 }
 
 async function init() {
-  // Safety: hide loading after 30s no matter what
   setTimeout(hideLoading, 30000);
-
-  // 1. Try localStorage cache
   const restored = Storage.load();
 
-  // 2. REST API: fetch everything
-  if (!restored || !state.buySellFromRest) {
-    await RestAPI.fetchAll();
-  } else {
-    // Still refresh secDefs + latest prices
-    setLoading(10, 'Cập nhật giá...');
-    await RestAPI.fetchSecDefs();
-    await RestAPI.fetchLatestTrades();
-    setLoading(90);
-  }
-
-  // 3. Connect WebSocket for realtime
+  // Start WebSocket IMMEDIATELY — don't wait for REST
   Adapter.connect();
 
-  // 4. Render loop
+  // Render loop starts now
   setInterval(render, CONFIG.refreshInterval);
   render();
 
-  // 5. Auto-save
+  // Auto-save
   setInterval(() => {
     if (Object.keys(state.trades).length > 0) Storage.save();
   }, CONFIG.saveInterval);
+
+  // REST fetch in background (non-blocking)
+  try {
+    if (!restored || Object.keys(state.secDefs).length < 20) {
+      await RestAPI.fetchSecDefs();
+    }
+    if (!restored || Object.keys(state.trades).length < 20) {
+      await RestAPI.fetchLatestTrades();
+    }
+    if (!state.buySellFromRest) {
+      await RestAPI.fetchTradesHistory();
+    }
+  } catch(e) {
+    console.warn('[REST] Background fetch failed:', e.message);
+  }
+  hideLoading();
 }
 
 init();
