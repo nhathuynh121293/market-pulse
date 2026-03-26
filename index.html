@@ -190,6 +190,8 @@ const CONFIG = {
   apiSecret: 'qYFpOGTT6-zTx_eQ1hUnjIAdb4SEUkdjGuqeLb0AkeXu4EShObts4opN12c0SRtCwc1ejG62reMAFHXiEa4yuA',
   wsUrl: 'wss://ws-openapi.dnse.com.vn/v1/stream?encoding=json',
   restUrl: 'https://openapi.dnse.com.vn',
+  // ── CORS Proxy: thay URL worker của bạn vào đây ──
+  proxyUrl: 'https://dnse-proxy.nhathuynhueh.workers.dev/proxy',
   boardId: 'G1',
   symbols: ['ACB','BCM','BID','BVH','CTG','FPT','GAS','GVR','HDB','HPG','MBB','MSN','MWG','PLX','POW','SAB','SHB','SSB','SSI','STB','TCB','TPB','VCB','VHM','VIB','VIC','VJC','VNM','VPB','VRE'],
   marketIndex: 'VNINDEX',
@@ -314,15 +316,24 @@ const RestAPI = {
   },
 
   async get(path, query) {
-    let url = CONFIG.restUrl + path;
-    if (query) {
-      const qs = Object.entries(query).filter(([,v])=>v!=null).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
-      if (qs) url += '?' + qs;
-    }
+    const qs = query ? Object.entries(query).filter(([,v])=>v!=null).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&') : '';
+    const search = qs ? '?' + qs : '';
+    // Auth headers are computed on original path (not proxy path)
     const h = await RestAPI.headers('GET', path);
-    const r = await fetch(url, {headers: h});
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
+
+    // Try proxy first, fallback to direct
+    const urls = [
+      CONFIG.proxyUrl + path + search,  // via Cloudflare Worker proxy
+      CONFIG.restUrl + path + search,    // direct (may fail CORS)
+    ];
+    for (const url of urls) {
+      try {
+        const r = await fetch(url, {headers: h});
+        if (!r.ok) continue;
+        return r.json();
+      } catch(e) { continue; }
+    }
+    throw new Error('All endpoints failed (CORS)');
   },
 
   // ── 1. SecDef ──
