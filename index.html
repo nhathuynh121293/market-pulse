@@ -12,16 +12,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
 .logo{font-family:var(--mono);font-weight:700;font-size:18px;letter-spacing:2px;background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .logo span{font-weight:400;font-size:12px;letter-spacing:0;-webkit-text-fill-color:var(--text3);margin-left:8px}
-.conn-status{display:flex;align-items:center;gap:8px;font-size:13px;font-family:var(--mono);color:var(--text3)}
+.conn{display:flex;align-items:center;gap:6px;font-size:12px;font-family:var(--mono);color:var(--text3)}
 .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--red);transition:.3s}
 .conn-dot.ok{background:var(--green);box-shadow:0 0 8px var(--green)}
 .conn-dot.connecting{background:var(--yellow);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.status-bar{display:flex;gap:12px;padding:6px 24px;background:var(--bg);border-bottom:1px solid var(--border);font-size:11px;font-family:var(--mono);color:var(--text3);align-items:center;flex-wrap:wrap}
-.tag{padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600}
-.tag-ok{background:var(--green-bg);color:var(--green)}.tag-warn{background:var(--yellow-bg);color:var(--yellow)}.tag-err{background:var(--red-bg);color:var(--red)}
-.warn-banner{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:6px;padding:6px 16px;font-size:11px;color:var(--yellow);display:none;align-items:center;gap:6px;margin:8px 24px 0}
-.warn-banner.show{display:flex}
 .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .5s}
 .loading-overlay.hide{opacity:0;pointer-events:none}
 .loading-bar{width:300px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
@@ -29,27 +24,38 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .tabs{display:flex;gap:0;padding:0 24px;background:var(--bg2);border-bottom:1px solid var(--border)}
 .tab{padding:10px 20px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;letter-spacing:.5px}
 .tab:hover{color:var(--text2)}.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
-.panel{display:none;padding:20px 24px;gap:16px;min-height:calc(100vh - 130px)}.panel.active{display:grid}
+.panel{display:none;padding:20px 24px;gap:16px;min-height:calc(100vh - 100px)}.panel.active{display:grid}
 #p-overview{grid-template-columns:280px 1fr 1fr;grid-template-rows:auto auto;gap:16px}
+#p-heatmap{grid-template-columns:1fr 1fr;gap:16px}
+#p-orderbook{grid-template-columns:220px 1fr;gap:16px}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent)}
 .card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:12px}
-.card-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:-8px;margin-bottom:10px}
 .gauge-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;grid-row:1/3}
 .gauge-value{font-family:var(--mono);font-size:42px;font-weight:700;line-height:1}
-.gauge-sub{font-size:12px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+.verdict{font-size:15px;font-weight:700;margin-top:10px;letter-spacing:.5px}
+.signal-tag{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;font-family:var(--mono);margin-top:8px;letter-spacing:.5px}
+.pos-bar-wrap{width:100%;margin-top:14px}
+.pos-bar-label{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:3px}
+.pos-bar{height:8px;background:linear-gradient(90deg,var(--floor),var(--text3) 50%,var(--ceil));border-radius:4px;position:relative}
+.pos-needle{position:absolute;top:-3px;width:3px;height:14px;background:var(--text);border-radius:2px;transform:translateX(-50%);transition:left .5s}
+.stat-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--border)}.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:12px;color:var(--text3)}.stat-val{font-family:var(--mono);font-size:14px;font-weight:600}
 .breadth-bar{display:flex;height:32px;border-radius:6px;overflow:hidden;margin:8px 0}
 .breadth-seg{transition:width .5s ease;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;min-width:0}
 .breadth-seg.up{background:var(--green);color:#000}.breadth-seg.ref{background:var(--yellow);color:#000}.breadth-seg.down{background:var(--red);color:#fff}
 .breadth-legend{display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--text2)}
 .breadth-legend .dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
-.stat-row{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--border)}.stat-row:last-child{border-bottom:none}
-.stat-label{font-size:12px;color:var(--text3)}.stat-val{font-family:var(--mono);font-size:14px;font-weight:600}
-.pressure-bar-wrap{position:relative;height:24px;border-radius:12px;background:var(--bg);overflow:hidden;margin:8px 0}
-.pressure-fill{height:100%;border-radius:12px;transition:width .5s ease;display:flex;align-items:center;padding:0 8px;font-family:var(--mono);font-size:11px;font-weight:600}
+.pressure-bar-wrap{position:relative;height:22px;border-radius:11px;background:var(--bg);overflow:hidden;margin:6px 0}
+.pressure-fill{height:100%;border-radius:11px;transition:width .5s ease;display:flex;align-items:center;padding:0 8px;font-family:var(--mono);font-size:11px;font-weight:600}
 .pressure-fill.buy{background:linear-gradient(90deg,var(--green2),var(--green));color:#000;justify-content:flex-end}
-.pressure-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-top:4px}
-#p-heatmap{grid-template-columns:1fr 1fr;gap:16px}
+.pressure-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:3px}
+.ind-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ind-verdict{font-size:12px;font-weight:700;font-family:var(--mono)}
+.ofi-row{display:flex;gap:8px;margin:8px 0}
+.ofi-box{flex:1;background:var(--bg);border-radius:6px;padding:6px 8px;text-align:center}
+.ofi-box .label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)}
+.ofi-box .val{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:2px}
 .zone-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}.zone-row:last-child{border-bottom:none}
 .zone-label{width:80px;font-size:12px;font-weight:600;flex-shrink:0}
 .zone-bar-wrap{flex:1;height:20px;background:var(--bg);border-radius:4px;overflow:hidden}
@@ -59,7 +65,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .movers-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:6px 4px;border-bottom:1px solid var(--border)}
 .movers-table td{padding:6px 4px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px}
 .movers-table .sym{font-weight:700;font-size:13px}
-#p-orderbook{grid-template-columns:220px 1fr;gap:16px}
 .symbol-list{max-height:calc(100vh - 180px);overflow-y:auto}
 .sym-item{padding:8px 10px;cursor:pointer;border-radius:6px;font-family:var(--mono);font-size:13px;display:flex;justify-content:space-between;transition:.15s}
 .sym-item:hover{background:var(--bg3)}.sym-item.active{background:var(--blue-bg);border:1px solid var(--blue)}
@@ -67,54 +72,37 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .depth-grid{display:grid;grid-template-columns:1fr 80px 1fr}
 .depth-header{display:grid;grid-template-columns:1fr 80px 1fr;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:4px}
 .depth-header>div:first-child{text-align:right}.depth-header>div:last-child{text-align:left}
-.ob-insight{display:flex;gap:12px;margin:12px 0;padding:10px;background:var(--bg);border-radius:6px;font-size:12px;font-family:var(--mono)}
-.ob-insight .label{color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:1px}
-.ob-insight .val{font-size:16px;font-weight:700;margin-top:2px}
-.ofi-row{display:flex;gap:16px;margin:8px 0}
-.ofi-box{flex:1;background:var(--bg);border-radius:6px;padding:8px;text-align:center}
-.ofi-box .label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)}
-.ofi-box .val{font-family:var(--mono);font-size:16px;font-weight:700;margin-top:2px}
+.ob-insights{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.ob-ins{background:var(--bg);border-radius:6px;padding:8px;text-align:center}
+.ob-ins .label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)}
+.ob-ins .val{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:2px}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 .up-c{color:var(--green)!important}.down-c{color:var(--red)!important}.ref-c{color:var(--yellow)!important}.ceil-c{color:var(--ceil)!important}.floor-c{color:var(--floor)!important}
 .text-r{text-align:right}.text-c{text-align:center}
 .empty-msg{color:var(--text3);font-size:13px;text-align:center;padding:40px 20px;font-style:italic}
-.large-order{background:rgba(59,130,246,.1)!important}
 @media(max-width:900px){#p-overview,#p-heatmap,#p-orderbook{grid-template-columns:1fr}.gauge-wrap{grid-row:auto}}
 </style>
 </head>
 <body>
-
 <div class="loading-overlay" id="loadingOverlay">
   <div class="logo" style="font-size:24px;margin-bottom:8px">MKT.PULSE</div>
   <div id="loadingText" style="font-size:13px;color:var(--text3);font-family:var(--mono)">Đang tải dữ liệu phiên...</div>
   <div class="loading-bar"><div class="loading-fill" id="loadingFill" style="width:0%"></div></div>
 </div>
-
 <div class="header">
   <div class="logo">MKT.PULSE <span>HOSE · VN30</span></div>
   <div style="display:flex;align-items:center;gap:16px">
-    <div class="conn-status"><div class="conn-dot connecting" id="ssiDot"></div><span id="ssiText">SSI: ...</span></div>
-    <div class="conn-status"><div class="conn-dot" id="wsDot"></div><span id="wsText">WS: chưa kết nối</span></div>
+    <span id="sessionLabel" style="font-size:12px;font-family:var(--mono);color:var(--text3)">--</span>
+    <div class="conn"><div class="conn-dot" id="connDot"></div><span id="connText">Kết nối...</span></div>
   </div>
 </div>
-<div class="status-bar">
-  <span>Mã: <b id="symCount">0/30</b></span>
-  <span>|</span>
-  <span>Phiên: <b id="sessionLabel">--</b></span>
-  <span>|</span>
-  <span>SSI poll: <b id="pollLabel">--</b></span>
-  <span>|</span>
-  <span>OFI: <span class="tag tag-warn" id="ofiTag">chờ WS</span></span>
-</div>
-<div class="warn-banner" id="warnBanner">⚠️ <span id="warnText"></span></div>
-
 <div class="tabs">
   <div class="tab active" data-tab="overview">Overview</div>
   <div class="tab" data-tab="heatmap">Heatmap & Movers</div>
   <div class="tab" data-tab="orderbook">Order Book</div>
 </div>
 
-<!-- ═══ OVERVIEW ═══ -->
+<!-- OVERVIEW -->
 <div class="panel active" id="p-overview">
   <div class="card gauge-wrap">
     <svg viewBox="0 0 200 130" width="200">
@@ -126,58 +114,51 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <circle cx="100" cy="110" r="5" fill="var(--text)"/>
     </svg>
     <div class="gauge-value" id="scoreVal">--</div>
-    <div class="gauge-sub">MARKET SCORE</div>
-    <div style="margin-top:12px;font-size:10px;color:var(--text3);text-align:center;line-height:1.5">
-      Breadth 35% · Buy/Sell 25%<br>Foreign 25% · OFI 15%
+    <div class="verdict" id="scoreVerdict">--</div>
+    <div class="signal-tag" id="signalTag" style="display:none">--</div>
+    <div class="pos-bar-wrap">
+      <div class="pos-bar-label"><span>Sàn</span><span>TC</span><span>Trần</span></div>
+      <div class="pos-bar"><div class="pos-needle" id="mktPosNeedle" style="left:50%"></div></div>
+      <div style="text-align:center;margin-top:4px;font-family:var(--mono);font-size:11px;color:var(--text3)"><span id="mktPosLabel">50</span>% biên độ</div>
     </div>
   </div>
-
   <div class="card">
-    <div class="card-title">Breadth — Tăng / Giảm / Tham chiếu</div>
+    <div class="ind-header"><div class="card-title" style="margin:0">Breadth</div><div class="ind-verdict" id="breadthVerdict">--</div></div>
     <div class="breadth-bar"><div class="breadth-seg up" id="segUp" style="width:33%">-</div><div class="breadth-seg ref" id="segRef" style="width:34%">-</div><div class="breadth-seg down" id="segDown" style="width:33%">-</div></div>
     <div class="breadth-legend">
       <span><span class="dot" style="background:var(--green)"></span>Tăng: <b id="bUp">-</b></span>
       <span><span class="dot" style="background:var(--yellow)"></span>TC: <b id="bRef">-</b></span>
       <span><span class="dot" style="background:var(--red)"></span>Giảm: <b id="bDown">-</b></span>
-      <span>Net: <b id="bNet">-</b></span>
     </div>
     <div style="margin-top:16px"><div class="card-title">Thống kê phiên</div>
       <div class="stat-row"><span class="stat-label">Tổng GTGD</span><span class="stat-val" id="totalVal">-</span></div>
       <div class="stat-row"><span class="stat-label">Tổng KLGD</span><span class="stat-val" id="totalVol">-</span></div>
-      <div class="stat-row"><span class="stat-label">Trạng thái phiên</span><span class="stat-val" id="sessionId">-</span></div>
     </div>
   </div>
-
   <div class="card">
-    <div class="card-title">Áp lực Mua / Bán chủ động</div>
-    <div class="card-sub">(VN30 · từ đầu phiên via SSI iBoard)</div>
-    <div style="margin:8px 0"><div class="pressure-labels"><span class="up-c">MUA</span><span class="down-c">BÁN</span></div>
-    <div class="pressure-bar-wrap"><div class="pressure-fill buy" id="buyBar" style="width:50%">50%</div></div></div>
-    <div class="stat-row"><span class="stat-label">KL Mua chủ động</span><span class="stat-val up-c" id="buyVol">-</span></div>
-    <div class="stat-row"><span class="stat-label">KL Bán chủ động</span><span class="stat-val down-c" id="sellVol">-</span></div>
-    <div class="stat-row"><span class="stat-label">Net Buy</span><span class="stat-val" id="netBuy">-</span></div>
-
-    <div style="margin-top:16px"><div class="card-title">Foreign Flow</div>
-    <div class="card-sub">(VN30 · net foreign từ SSI)</div>
-    <div class="pressure-bar-wrap"><div class="pressure-fill buy" id="ffBar" style="width:50%">50%</div></div>
-    <div class="stat-row"><span class="stat-label">NN Mua</span><span class="stat-val up-c" id="ffBuy">-</span></div>
-    <div class="stat-row"><span class="stat-label">NN Bán</span><span class="stat-val down-c" id="ffSell">-</span></div>
-    <div class="stat-row"><span class="stat-label">Net Foreign</span><span class="stat-val" id="ffNet">-</span></div>
+    <div class="ind-header"><div class="card-title" style="margin:0">Mua / Bán chủ động</div><div class="ind-verdict" id="bsVerdict">--</div></div>
+    <div class="pressure-bar-wrap"><div class="pressure-fill buy" id="buyBar" style="width:50%">50%</div></div>
+    <div class="pressure-labels"><span class="up-c">Mua: <b id="buyVol">-</b></span><span class="down-c">Bán: <b id="sellVol">-</b></span></div>
+    <div class="stat-row"><span class="stat-label">Net</span><span class="stat-val" id="netBuy">-</span></div>
+    <div style="margin-top:14px">
+      <div class="ind-header"><div class="card-title" style="margin:0">Khối ngoại</div><div class="ind-verdict" id="ffVerdict">--</div></div>
+      <div class="pressure-bar-wrap"><div class="pressure-fill buy" id="ffBar" style="width:50%">50%</div></div>
+      <div class="pressure-labels"><span class="up-c">Mua: <b id="ffBuy">-</b></span><span class="down-c">Bán: <b id="ffSell">-</b></span></div>
+      <div class="stat-row"><span class="stat-label">Net</span><span class="stat-val" id="ffNet">-</span></div>
     </div>
-
-    <div style="margin-top:16px"><div class="card-title">Order Flow Imbalance (OFI)</div>
-    <div class="card-sub">(VN30 · rolling window từ DNSE WS)</div>
-    <div class="ofi-row">
-      <div class="ofi-box"><div class="label">1 phút</div><div class="val" id="ofi1m">0</div></div>
-      <div class="ofi-box"><div class="label">5 phút</div><div class="val" id="ofi5m">0</div></div>
-      <div class="ofi-box"><div class="label">15 phút</div><div class="val" id="ofi15m">0</div></div>
-    </div>
-    <canvas id="ofiChart" height="50" style="width:100%;border-radius:4px;background:var(--bg)"></canvas>
+    <div style="margin-top:14px">
+      <div class="ind-header"><div class="card-title" style="margin:0">Order Flow (OFI)</div><div class="ind-verdict" id="ofiVerdict">Chờ dữ liệu</div></div>
+      <div class="ofi-row">
+        <div class="ofi-box"><div class="label">Tức thì</div><div class="val" id="ofiFast">-</div></div>
+        <div class="ofi-box"><div class="label">Ngắn hạn</div><div class="val" id="ofiMid">-</div></div>
+        <div class="ofi-box"><div class="label">Trong phiên</div><div class="val" id="ofiSlow">-</div></div>
+      </div>
+      <canvas id="ofiChart" height="50" style="width:100%;border-radius:4px;background:var(--bg)"></canvas>
     </div>
   </div>
 </div>
 
-<!-- ═══ HEATMAP ═══ -->
+<!-- HEATMAP -->
 <div class="panel" id="p-heatmap">
   <div class="card"><div class="card-title">Phân bổ vùng giá — VN30</div><div id="zoneChart"></div></div>
   <div class="card" style="display:grid;grid-template-rows:auto auto auto;gap:12px">
@@ -187,19 +168,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
-<!-- ═══ ORDER BOOK ═══ -->
+<!-- ORDER BOOK -->
 <div class="panel" id="p-orderbook">
-  <div class="card"><div class="card-title">Chọn mã CK</div><div class="symbol-list" id="symList"></div></div>
+  <div class="card"><div class="card-title">VN30</div><div class="symbol-list" id="symList"></div></div>
   <div class="card">
     <div class="card-title">Order Book — <span id="obSymbol">---</span></div>
-    <div style="display:flex;gap:16px;margin-bottom:8px;font-size:12px">
-      <span>Giá: <b id="obPrice">-</b></span><span>Trần: <b class="ceil-c" id="obCeil">-</b></span><span>Sàn: <b class="floor-c" id="obFloor">-</b></span><span>TC: <b class="ref-c" id="obRef">-</b></span>
+    <div id="obPosWrap" style="display:none;margin-bottom:10px">
+      <div class="pos-bar-label"><span id="obFloorLabel">-</span><span id="obRefLabel">-</span><span id="obCeilLabel">-</span></div>
+      <div class="pos-bar"><div class="pos-needle" id="obPosNeedle" style="left:50%"></div></div>
     </div>
-    <div class="ob-insight" id="obInsight" style="display:none">
-      <div><div class="label">Spread</div><div class="val" id="obSpread">-</div></div>
-      <div><div class="label">Bid/Ask Ratio</div><div class="val" id="obRatio">-</div></div>
-      <div><div class="label">Imbalance</div><div class="val" id="obImbalance">-</div></div>
-      <div><div class="label">NN Net</div><div class="val" id="obForeign">-</div></div>
+    <div class="ob-insights" id="obInsights" style="display:none">
+      <div class="ob-ins"><div class="label">Spread</div><div class="val" id="obSpread">-</div></div>
+      <div class="ob-ins"><div class="label">Bid/Ask</div><div class="val" id="obRatio">-</div></div>
+      <div class="ob-ins"><div class="label">OFI</div><div class="val" id="obOfi">-</div></div>
+      <div class="ob-ins"><div class="label">NN ròng</div><div class="val" id="obForeign">-</div></div>
     </div>
     <div class="depth-header"><div>KL Bid</div><div class="text-c">Giá</div><div>KL Ask</div></div>
     <div id="depthChart"></div>
@@ -208,736 +190,292 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-// 1. CONFIG
-// ═══════════════════════════════════════════════════════════════
-const CONFIG = {
-  ssiProxy: 'https://ssi-proxy.nhathuynhueh.workers.dev',
-  ssiPath: '/stock/group/VN30',
-  ssiPollMs: 15000,
-
-  // DNSE WS — only for OFI
-  wsApiKey: 'eyJvcmciOiJkbnNlIiwiaWQiOiI3YmMxZGU4OTg2MDM0MWQyOTNiNjZmNDk5YjZjYmM4OCIsImgiOiJtdXJtdXIxMjgifQ==',
-  wsApiSecret: 'qYFpOGTT6-zTx_eQ1hUnjIAdb4SEUkdjGuqeLb0AkeXu4EShObts4opN12c0SRtCwc1ejG62reMAFHXiEa4yuA',
-  wsUrl: 'wss://ws-openapi.dnse.com.vn/v1/stream?encoding=json',
-  boardId: 'G1',
-
-  renderMs: 1000,
-  ofiMaxAge: 15 * 60 * 1000, // 15 min
-  storageKey: 'mktpulse_v4',
+const CFG={
+  proxyUrl:'https://ssi-proxy.nhathuynhueh.workers.dev/stock/group/VN30',
+  pollMs:15000,
+  wsUrl:'wss://ws-openapi.dnse.com.vn/v1/stream?encoding=json',
+  wsKey:'eyJvcmciOiJkbnNlIiwiaWQiOiI3YmMxZGU4OTg2MDM0MWQyOTNiNjZmNDk5YjZjYmM4OCIsImgiOiJtdXJtdXIxMjgifQ==',
+  wsSecret:'qYFpOGTT6-zTx_eQ1hUnjIAdb4SEUkdjGuqeLb0AkeXu4EShObts4opN12c0SRtCwc1ejG62reMAFHXiEa4yuA',
+  boardId:'G1',renderMs:1000,
+  HL_FAST:60,HL_MID:300,HL_SLOW:900,
+  W_L1:1.0,W_L2:0.5,W_L3:0.25,
 };
+const SESS={'ATO':'ATO','LO':'Liên tục','ATC':'ATC','CLOSE':'Đã đóng','C':'Đã đóng','PCA':'Sau giờ','O':'Chưa mở','P':'Tạm ngưng','PT':'Thỏa thuận','PTR':'Thỏa thuận'};
+const ST={symbols:[],stocks:{},selectedSymbol:null,dataOk:false,wsOk:false,stockOfi:{},prevQ:{},ofiHist:[],priceHist:[],ofiCount:0};
 
-// ═══════════════════════════════════════════════════════════════
-// 2. STATE
-// ═══════════════════════════════════════════════════════════════
-const S = {
-  symbols: [],        // dynamic VN30 list from SSI
-  stocks: {},         // sym → parsed SSI data
-  selectedSymbol: null,
+// Helpers
+function fmt(n){if(n==null||isNaN(n))return'-';const a=Math.abs(n);if(a>=1e12)return(n/1e12).toFixed(1)+'T';if(a>=1e9)return(n/1e9).toFixed(1)+'B';if(a>=1e6)return(n/1e6).toFixed(1)+'M';if(a>=1e3)return(n/1e3).toFixed(1)+'K';return n.toLocaleString('vi-VN')}
+function fP(p){return p?p.toLocaleString('vi-VN'):'—'}
+function pC(pct){return pct>0.01?'up-c':pct<-0.01?'down-c':'ref-c'}
+function prC(price,s){if(!s||!price)return'';if(s.ceil&&price>=s.ceil)return'ceil-c';if(s.floor&&price<=s.floor)return'floor-c';if(s.ref&&price>s.ref)return'up-c';if(s.ref&&price<s.ref)return'down-c';return'ref-c'}
+function setLoading(p,t){document.getElementById('loadingFill').style.width=p+'%';if(t)document.getElementById('loadingText').textContent=t}
+function hideLoading(){document.getElementById('loadingOverlay').classList.add('hide');setTimeout(()=>document.getElementById('loadingOverlay').style.display='none',600)}
+function updateConn(s,t){document.getElementById('connDot').className='conn-dot'+(s==='ok'?' ok':s==='connecting'?' connecting':'');document.getElementById('connText').textContent=t}
+async function hmacHex(secret,msg){const e=new TextEncoder();const k=await crypto.subtle.importKey('raw',e.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);const s=await crypto.subtle.sign('HMAC',k,e.encode(msg));return[...new Uint8Array(s)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 
-  // SSI status
-  ssiOk: false,
-  ssiLastPoll: 0,
-
-  // DNSE WS — OFI only
-  ws: null,
-  wsConnected: false,
-  wsAuthenticated: false,
-
-  // OFI engine
-  ofiEvents: [],      // [{time, dBid, dAsk}]
-  prevQuotes: {},     // sym → {bq, aq}
-  ofiHistory: [],     // [{time, v}] for sparkline (5m snapshots)
-};
-
-// ═══════════════════════════════════════════════════════════════
-// 3. HELPERS
-// ═══════════════════════════════════════════════════════════════
-const SESSION_MAP = {
-  'ATO':'ATO (Mở cửa)','LO':'Liên tục','ATC':'ATC (Đóng cửa)',
-  'CLOSE':'Đóng cửa','C':'Đóng cửa','PT':'Thỏa thuận','PCA':'Sau giờ',
-  'O':'Chưa mở','P':'Tạm ngưng',
-};
-
-function fmt(n) {
-  if (n == null || isNaN(n)) return '-';
-  const a = Math.abs(n);
-  if (a >= 1e12) return (n/1e12).toFixed(1) + 'T';
-  if (a >= 1e9) return (n/1e9).toFixed(1) + 'B';
-  if (a >= 1e6) return (n/1e6).toFixed(1) + 'M';
-  if (a >= 1e3) return (n/1e3).toFixed(1) + 'K';
-  return n.toLocaleString('vi-VN');
-}
-
-function fP(p) { return p ? p.toLocaleString('vi-VN') : '—'; }
-
-function pC(pct) { return pct > 0.01 ? 'up-c' : pct < -0.01 ? 'down-c' : 'ref-c'; }
-
-function prC(price, stk) {
-  if (!stk || !price) return '';
-  if (stk.ceil && price >= stk.ceil) return 'ceil-c';
-  if (stk.floor && price <= stk.floor) return 'floor-c';
-  if (stk.ref && price > stk.ref) return 'up-c';
-  if (stk.ref && price < stk.ref) return 'down-c';
-  return 'ref-c';
-}
-
-function setLoading(pct, text) {
-  document.getElementById('loadingFill').style.width = pct + '%';
-  if (text) document.getElementById('loadingText').textContent = text;
-}
-function hideLoading() {
-  document.getElementById('loadingOverlay').classList.add('hide');
-  setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 600);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 4. CRYPTO (for DNSE WS auth)
-// ═══════════════════════════════════════════════════════════════
-async function hmacHex(secret, msg) {
-  const e = new TextEncoder();
-  const k = await crypto.subtle.importKey('raw', e.encode(secret), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
-  const s = await crypto.subtle.sign('HMAC', k, e.encode(msg));
-  return [...new Uint8Array(s)].map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 5. SSI API
-// ═══════════════════════════════════════════════════════════════
-const SSI = {
-  async poll() {
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 12000);
-      const url = CONFIG.ssiProxy + CONFIG.ssiPath;
-      const r = await fetch(url, { signal: ctrl.signal });
-      clearTimeout(timer);
-
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const json = await r.json();
-      if (json.code !== 'SUCCESS' || !json.data) throw new Error(json.message || 'Bad response');
-
-      SSI.parse(json.data);
-      S.ssiOk = true;
-      S.ssiLastPoll = Date.now();
-      return true;
-    } catch (e) {
-      console.warn('[SSI] Poll failed:', e.message);
-      S.ssiOk = false;
-      return false;
-    }
+// Data API
+const DataAPI={
+  async poll(){
+    try{
+      const r=await fetch(CFG.proxyUrl,{signal:AbortSignal.timeout(12000)});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const j=await r.json();
+      if(j.code!=='SUCCESS'||!j.data)throw new Error(j.message||'Bad data');
+      DataAPI.parse(j.data);ST.dataOk=true;return true;
+    }catch(e){console.warn('[Data]',e.message);return false}
   },
-
-  parse(data) {
-    const newSymbols = [];
-    const newStocks = {};
-
-    for (const item of data) {
-      const sym = item.stockSymbol;
-      if (!sym) continue;
-      newSymbols.push(sym);
-
-      const bid = [
-        { price: item.best1Bid, qty: item.best1BidVol },
-        { price: item.best2Bid, qty: item.best2BidVol },
-        { price: item.best3Bid, qty: item.best3BidVol },
-      ].filter(l => l.price > 0);
-
-      const offer = [
-        { price: item.best1Offer, qty: item.best1OfferVol },
-        { price: item.best2Offer, qty: item.best2OfferVol },
-        { price: item.best3Offer, qty: item.best3OfferVol },
-      ].filter(l => l.price > 0);
-
-      newStocks[sym] = {
-        ref: item.refPrice || 0,
-        ceil: item.ceiling || 0,
-        floor: item.floor || 0,
-        price: item.matchedPrice || 0,
-        lastQty: item.matchedVolume || 0,
-        open: item.openPrice || 0,
-        high: item.highest || 0,
-        low: item.lowest || 0,
-        avg: item.avgPrice || 0,
-        vol: item.nmTotalTradedQty || 0,
-        value: item.nmTotalTradedValue || 0,
-        buyVol: item.stockBUVol || 0,
-        sellVol: item.stockSDVol || 0,
-        foreignBuy: item.buyForeignQtty || 0,
-        foreignSell: item.sellForeignQtty || 0,
-        foreignBuyVal: item.buyForeignValue || 0,
-        foreignSellVal: item.sellForeignValue || 0,
-        bid, offer,
-        session: item.session || '',
-        name: item.companyNameVi || '',
-        pctChange: item.priceChangePercent || 0,
-        priceChange: item.priceChange || 0,
+  parse(data){
+    const syms=[],stocks={};
+    for(const d of data){
+      const sym=d.stockSymbol;if(!sym)continue;syms.push(sym);
+      stocks[sym]={
+        ref:d.refPrice||0,ceil:d.ceiling||0,floor:d.floor||0,
+        price:d.matchedPrice||0,open:d.openPrice||0,high:d.highest||0,low:d.lowest||0,
+        vol:d.nmTotalTradedQty||0,value:d.nmTotalTradedValue||0,
+        buyVol:d.stockBUVol||0,sellVol:d.stockSDVol||0,
+        fBuy:d.buyForeignQtty||0,fSell:d.sellForeignQtty||0,
+        fBuyVal:d.buyForeignValue||0,fSellVal:d.sellForeignValue||0,
+        bid:[{price:d.best1Bid,qty:d.best1BidVol},{price:d.best2Bid,qty:d.best2BidVol},{price:d.best3Bid,qty:d.best3BidVol}].filter(l=>l.price>0),
+        offer:[{price:d.best1Offer,qty:d.best1OfferVol},{price:d.best2Offer,qty:d.best2OfferVol},{price:d.best3Offer,qty:d.best3OfferVol}].filter(l=>l.price>0),
+        session:d.session||'',pct:d.priceChangePercent||0,name:d.companyNameVi||'',
       };
     }
-
-    // Sort alphabetically
-    newSymbols.sort();
-    S.symbols = newSymbols;
-    S.stocks = newStocks;
+    syms.sort();ST.symbols=syms;ST.stocks=stocks;
+    let sp=0,cn=0;for(const sym of syms){const s=stocks[sym];if(s.pct!==0){sp+=s.pct;cn++}}
+    ST.priceHist.push({time:Date.now(),avgPct:cn>0?sp/cn:0});
+    if(ST.priceHist.length>200)ST.priceHist.shift();
   },
 };
 
-// ═══════════════════════════════════════════════════════════════
-// 6. DNSE WEBSOCKET (OFI only)
-// ═══════════════════════════════════════════════════════════════
-const WS = {
-  connect() {
-    if (S.symbols.length === 0) {
-      console.warn('[WS] No symbols yet, delaying...');
-      setTimeout(() => WS.connect(), 3000);
-      return;
-    }
-    updateWsStatus('connecting', 'Đang kết nối...');
-    try {
-      const ws = new WebSocket(CONFIG.wsUrl);
-      S.ws = ws;
-      ws.onopen = () => {};
-      ws.onclose = (e) => {
-        S.wsConnected = false;
-        S.wsAuthenticated = false;
-        updateWsStatus('off', `Ngắt (${e.code})`);
-        // Reset prevQuotes on disconnect to avoid stale deltas
-        S.prevQuotes = {};
-        setTimeout(() => WS.connect(), 5000);
+// WebSocket
+const WS={
+  ws:null,
+  connect(){
+    if(!ST.symbols.length){setTimeout(()=>WS.connect(),3000);return}
+    updateConn('connecting','Kết nối...');
+    try{
+      const ws=new WebSocket(CFG.wsUrl);WS.ws=ws;
+      ws.onclose=()=>{ST.wsOk=false;ST.prevQ={};updateConn('off','Mất kết nối');setTimeout(()=>WS.connect(),5000)};
+      ws.onerror=()=>{};
+      ws.onmessage=async(evt)=>{
+        let d;try{d=JSON.parse(evt.data)}catch{return}
+        const a=d.action||d.a;
+        if(d.session_id||d.sid){WS.auth(ws);return}
+        if(a==='auth_success'){ST.wsOk=true;updateConn('ok','Đang cập nhật');WS.sub(ws);return}
+        if(a==='auth_error'||a==='error'){updateConn('off','Lỗi xác thực');return}
+        if(a==='ping'){ws.send(JSON.stringify({action:'pong'}));return}
+        if(a==='pong'||a==='subscribed')return;
+        if(d.T==='q')WS.onQuote(d);
       };
-      ws.onerror = () => {};
-      ws.onmessage = async (evt) => {
-        let d;
-        try { d = JSON.parse(evt.data); } catch { return; }
-        const a = d.action || d.a;
-        if (d.session_id || d.sid) { await WS.auth(ws); return; }
-        if (a === 'auth_success') {
-          S.wsConnected = true;
-          S.wsAuthenticated = true;
-          updateWsStatus('ok', 'OFI active');
-          WS.subscribe(ws);
-          return;
-        }
-        if (a === 'auth_error' || a === 'error') {
-          updateWsStatus('off', 'Auth lỗi');
-          return;
-        }
-        if (a === 'ping') { ws.send(JSON.stringify({action:'pong'})); return; }
-        if (a === 'pong' || a === 'subscribed') return;
-        // Only handle quotes for OFI
-        if (d.T === 'q') WS.onQuote(d);
-      };
-    } catch {
-      updateWsStatus('off', 'Lỗi');
-      setTimeout(() => WS.connect(), 5000);
+    }catch{updateConn('off','Lỗi');setTimeout(()=>WS.connect(),5000)}
+  },
+  async auth(ws){
+    const ts=Math.floor(Date.now()/1000),nc=String(Date.now()*1000);
+    ws.send(JSON.stringify({action:'auth',api_key:CFG.wsKey,signature:await hmacHex(CFG.wsSecret,CFG.wsKey+':'+ts+':'+nc),timestamp:ts,nonce:nc}));
+  },
+  sub(ws){ws.send(JSON.stringify({action:'subscribe',channels:[{name:'top_price.'+CFG.boardId+'.json',symbols:ST.symbols}]}))},
+  onQuote(d){
+    const sym=d.Symbol||d.symbol;if(!sym||!ST.symbols.includes(sym))return;
+    const bids=d.Bid||d.bid||[],offers=d.Offer||d.offer||[];
+    const cur={b1:bids[0]?.qtty||0,b2:bids[1]?.qtty||0,b3:bids[2]?.qtty||0,a1:offers[0]?.qtty||0,a2:offers[1]?.qtty||0,a3:offers[2]?.qtty||0};
+    const prev=ST.prevQ[sym];
+    if(prev){
+      const delta=CFG.W_L1*((cur.b1-prev.b1)-(cur.a1-prev.a1))+CFG.W_L2*((cur.b2-prev.b2)-(cur.a2-prev.a2))+CFG.W_L3*((cur.b3-prev.b3)-(cur.a3-prev.a3));
+      OFI.update(sym,delta);ST.ofiCount++;
     }
-  },
-
-  async auth(ws) {
-    const ts = Math.floor(Date.now() / 1000);
-    const nc = String(Date.now() * 1000);
-    const sig = await hmacHex(CONFIG.wsApiSecret, `${CONFIG.wsApiKey}:${ts}:${nc}`);
-    ws.send(JSON.stringify({
-      action: 'auth',
-      api_key: CONFIG.wsApiKey,
-      signature: sig,
-      timestamp: ts,
-      nonce: nc,
-    }));
-  },
-
-  subscribe(ws) {
-    // Only subscribe to quotes for OFI calculation
-    ws.send(JSON.stringify({
-      action: 'subscribe',
-      channels: [{ name: `top_price.${CONFIG.boardId}.json`, symbols: S.symbols }],
-    }));
-    console.log('[WS] Subscribed to quotes for', S.symbols.length, 'symbols');
-  },
-
-  onQuote(d) {
-    const sym = d.Symbol || d.symbol;
-    if (!sym || !S.symbols.includes(sym)) return;
-
-    const bids = d.Bid || d.bid || [];
-    const offers = d.Offer || d.offer || [];
-    const curBQ = bids[0]?.qtty || bids[0]?.Qtty || 0;
-    const curAQ = offers[0]?.qtty || offers[0]?.Qtty || 0;
-
-    const prev = S.prevQuotes[sym];
-    if (prev) {
-      S.ofiEvents.push({
-        time: Date.now(),
-        dBid: curBQ - prev.bq,
-        dAsk: curAQ - prev.aq,
-      });
-    }
-    S.prevQuotes[sym] = { bq: curBQ, aq: curAQ };
+    ST.prevQ[sym]=cur;
   },
 };
 
-function updateWsStatus(s, t) {
-  const dot = document.getElementById('wsDot');
-  dot.className = 'conn-dot' + (s === 'ok' ? ' ok' : s === 'connecting' ? ' connecting' : '');
-  document.getElementById('wsText').textContent = 'WS: ' + t;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 7. OFI ENGINE
-// ═══════════════════════════════════════════════════════════════
-const OFI = {
-  calc(windowMs) {
-    const cutoff = Date.now() - windowMs;
-    let total = 0;
-    for (let i = S.ofiEvents.length - 1; i >= 0; i--) {
-      const e = S.ofiEvents[i];
-      if (e.time < cutoff) break; // events are chronological
-      total += e.dBid - e.dAsk;
-    }
-    return total;
+// OFI Engine
+const OFI={
+  update(sym,delta){
+    const now=Date.now()/1000;
+    if(!ST.stockOfi[sym])ST.stockOfi[sym]={fast:0,mid:0,slow:0,t:now};
+    const o=ST.stockOfi[sym],dt=now-o.t;
+    if(dt>0){o.fast=o.fast*Math.exp(-dt/CFG.HL_FAST)+delta;o.mid=o.mid*Math.exp(-dt/CFG.HL_MID)+delta;o.slow=o.slow*Math.exp(-dt/CFG.HL_SLOW)+delta;o.t=now}
   },
-
-  prune() {
-    const cutoff = Date.now() - CONFIG.ofiMaxAge;
-    // Find first event within range
-    let idx = 0;
-    while (idx < S.ofiEvents.length && S.ofiEvents[idx].time < cutoff) idx++;
-    if (idx > 0) S.ofiEvents.splice(0, idx);
+  get(sym,w){const o=ST.stockOfi[sym];if(!o)return 0;const dt=Date.now()/1000-o.t;const hl=w==='fast'?CFG.HL_FAST:w==='mid'?CFG.HL_MID:CFG.HL_SLOW;return o[w]*Math.exp(-dt/hl)},
+  agg(w){let t=0;for(const sym of ST.symbols)t+=OFI.get(sym,w);return t},
+  regime(){
+    if(ST.ofiCount<30)return{tag:'Chờ dữ liệu',cls:'ref-c',type:'wait'};
+    const fast=OFI.agg('fast'),mid=OFI.agg('mid');
+    const div=OFI.divergence();if(div)return div;
+    const absMid=Math.abs(mid);
+    if(absMid<10)return{tag:'Trung tính',cls:'ref-c',type:'neutral'};
+    const ratio=Math.abs(fast)/Math.max(absMid,1),sameDir=(fast>=0)===(mid>=0);
+    if(!sameDir)return{tag:'Đảo chiều',cls:'ref-c',bg:'var(--yellow-bg)',type:'reversal'};
+    if(ratio>1.5)return{tag:mid>0?'Tăng tốc ↑':'Tăng tốc ↓',cls:mid>0?'up-c':'down-c',bg:mid>0?'var(--green-bg)':'var(--red-bg)',type:'accel'};
+    if(ratio<0.4)return{tag:'Cạn lực',cls:'ref-c',bg:'var(--yellow-bg)',type:'exhaust'};
+    return{tag:mid>0?'Mua ổn định':'Bán ổn định',cls:mid>0?'up-c':'down-c',type:'steady'};
   },
-
-  snapshot() {
-    const v = OFI.calc(5 * 60 * 1000);
-    const last = S.ofiHistory[S.ofiHistory.length - 1];
-    if (!last || Date.now() - last.time > 10000) {
-      S.ofiHistory.push({ time: Date.now(), v });
-      if (S.ofiHistory.length > 500) S.ofiHistory.shift();
-    }
+  divergence(){
+    if(ST.priceHist.length<3)return null;
+    const now=Date.now();let old=null;
+    for(let i=ST.priceHist.length-1;i>=0;i--){if(now-ST.priceHist[i].time>=45000){old=ST.priceHist[i];break}}
+    if(!old)return null;
+    const cur=ST.priceHist[ST.priceHist.length-1],pd=cur.avgPct-old.avgPct,ofi=OFI.agg('fast');
+    if(Math.abs(pd)<0.05||Math.abs(ofi)<20)return null;
+    if(pd<0&&ofi>0)return{tag:'⚡ Phân kỳ tăng',cls:'up-c',bg:'var(--green-bg)',type:'div_bull'};
+    if(pd>0&&ofi<0)return{tag:'⚡ Phân kỳ giảm',cls:'down-c',bg:'var(--red-bg)',type:'div_bear'};
+    return null;
   },
-};
-
-// ═══════════════════════════════════════════════════════════════
-// 8. ANALYZER
-// ═══════════════════════════════════════════════════════════════
-const A = {
-  breadth() {
-    let u = 0, d = 0, r = 0;
-    for (const sym of S.symbols) {
-      const stk = S.stocks[sym];
-      if (!stk || !stk.price || !stk.ref) { r++; continue; }
-      if (stk.price > stk.ref) u++;
-      else if (stk.price < stk.ref) d++;
-      else r++;
-    }
-    const total = u + d + r;
-    return { up: u, down: d, ref: r, total, net: u - d };
-  },
-
-  pressure() {
-    let b = 0, s = 0;
-    for (const sym of S.symbols) {
-      const stk = S.stocks[sym];
-      if (!stk) continue;
-      b += stk.buyVol || 0;
-      s += stk.sellVol || 0;
-    }
-    const t = b + s;
-    return { totalBuy: b, totalSell: s, total: t, buyPct: t > 0 ? (b / t * 100) : 50 };
-  },
-
-  foreignFlow() {
-    let b = 0, s = 0, bv = 0, sv = 0;
-    for (const sym of S.symbols) {
-      const stk = S.stocks[sym];
-      if (!stk) continue;
-      b += stk.foreignBuy || 0;
-      s += stk.foreignSell || 0;
-      bv += stk.foreignBuyVal || 0;
-      sv += stk.foreignSellVal || 0;
-    }
-    const t = bv + sv;
-    return { totalBuy: b, totalSell: s, totalBuyVal: bv, totalSellVal: sv, buyPct: t > 0 ? (bv / t * 100) : 50 };
-  },
-
-  zones() {
-    const z = { ceil: 0, sUp: 0, lUp: 0, ref: 0, lDown: 0, sDown: 0, floor: 0 };
-    for (const sym of S.symbols) {
-      const stk = S.stocks[sym];
-      if (!stk || !stk.price || !stk.ref) { z.ref++; continue; }
-      const p = stk.price, bp = stk.ref;
-      const cp = stk.ceil || bp * 1.07, fp = stk.floor || bp * 0.93;
-      if (p >= cp) z.ceil++;
-      else if (p >= bp + (cp - bp) * 0.5) z.sUp++;
-      else if (p > bp) z.lUp++;
-      else if (p === bp) z.ref++;
-      else if (p <= fp) z.floor++;
-      else if (p <= bp - (bp - fp) * 0.5) z.sDown++;
-      else z.lDown++;
-    }
-    return z;
-  },
-
-  topMovers() {
-    const arr = [];
-    for (const sym of S.symbols) {
-      const stk = S.stocks[sym];
-      if (!stk || !stk.price) continue;
-      arr.push({ sym, price: stk.price, pct: stk.pctChange || 0, vol: stk.vol, value: stk.value, stk });
-    }
-    return {
-      topUp: [...arr].sort((a, b) => b.pct - a.pct).slice(0, 5),
-      topDown: [...arr].sort((a, b) => a.pct - b.pct).slice(0, 5),
-      topVol: [...arr].sort((a, b) => b.value - a.value).slice(0, 5),
-    };
-  },
-
-  totals() {
-    let v = 0, a = 0, session = '';
-    for (const sym of S.symbols) {
-      const stk = S.stocks[sym];
-      if (!stk) continue;
-      v += stk.vol || 0;
-      a += stk.value || 0;
-      if (stk.session) session = stk.session;
-    }
-    return { vol: v, amt: a, session };
-  },
-
-  score() {
-    const b = A.breadth();
-    const p = A.pressure();
-    const ff = A.foreignFlow();
-    const ofi5 = OFI.calc(5 * 60 * 1000);
-
-    // Breadth: ratio of up stocks → 0-100
-    const breadthScore = b.total > 0 ? (b.up / b.total) * 100 : 50;
-
-    // Buy/Sell: buyPct is already 0-100
-    const buyScore = p.buyPct;
-
-    // Foreign: buy value ratio → 0-100
-    const ffScore = ff.buyPct;
-
-    // OFI: soft normalize with tanh → 0-100
-    // Scale factor: 5000 = moderate signal
-    const ofiNorm = Math.tanh(ofi5 / 5000);
-    const ofiScore = 50 + ofiNorm * 50;
-
-    return Math.round(
-      breadthScore * 0.35 +
-      buyScore * 0.25 +
-      ffScore * 0.25 +
-      ofiScore * 0.15
-    );
+  snapshot(){
+    const v=OFI.agg('mid'),last=ST.ofiHist[ST.ofiHist.length-1];
+    if(!last||Date.now()-last.time>10000){ST.ofiHist.push({time:Date.now(),v});if(ST.ofiHist.length>500)ST.ofiHist.shift()}
   },
 };
 
-// ═══════════════════════════════════════════════════════════════
-// 9. UI RENDERERS
-// ═══════════════════════════════════════════════════════════════
-function updateStatusBar() {
-  document.getElementById('symCount').textContent = `${S.symbols.length}/30`;
-  const dot = document.getElementById('ssiDot');
-  dot.className = 'conn-dot' + (S.ssiOk ? ' ok' : ' connecting');
-  document.getElementById('ssiText').textContent = 'SSI: ' + (S.ssiOk ? 'OK' : 'đang tải...');
+// Analyzer
+const A={
+  breadth(){let u=0,d=0,r=0;for(const sym of ST.symbols){const s=ST.stocks[sym];if(!s||!s.price||!s.ref){r++;continue}if(s.price>s.ref)u++;else if(s.price<s.ref)d++;else r++}return{up:u,down:d,ref:r,total:u+d+r,net:u-d}},
+  pressure(){let b=0,s=0;for(const sym of ST.symbols){const stk=ST.stocks[sym];if(!stk)continue;b+=stk.buyVol;s+=stk.sellVol}const t=b+s;return{buy:b,sell:s,total:t,buyPct:t>0?b/t*100:50}},
+  foreign(){let bv=0,sv=0;for(const sym of ST.symbols){const s=ST.stocks[sym];if(!s)continue;bv+=s.fBuyVal;sv+=s.fSellVal}const t=bv+sv;return{buyVal:bv,sellVal:sv,buyPct:t>0?bv/t*100:50}},
+  zones(){const z={ceil:0,sUp:0,lUp:0,ref:0,lDown:0,sDown:0,floor:0};for(const sym of ST.symbols){const s=ST.stocks[sym];if(!s||!s.price||!s.ref){z.ref++;continue}const p=s.price,bp=s.ref,cp=s.ceil||bp*1.07,fp=s.floor||bp*0.93;if(p>=cp)z.ceil++;else if(p>=bp+(cp-bp)*.5)z.sUp++;else if(p>bp)z.lUp++;else if(p===bp)z.ref++;else if(p<=fp)z.floor++;else if(p<=bp-(bp-fp)*.5)z.sDown++;else z.lDown++}return z},
+  topMovers(){const arr=[];for(const sym of ST.symbols){const s=ST.stocks[sym];if(!s||!s.price)continue;arr.push({sym,price:s.price,pct:s.pct||0,vol:s.vol,value:s.value,stk:s})}return{topUp:[...arr].sort((a,b)=>b.pct-a.pct).slice(0,5),topDown:[...arr].sort((a,b)=>a.pct-b.pct).slice(0,5),topVol:[...arr].sort((a,b)=>b.value-a.value).slice(0,5)}},
+  totals(){let v=0,a=0,sess='';for(const sym of ST.symbols){const s=ST.stocks[sym];if(!s)continue;v+=s.vol;a+=s.value;if(s.session)sess=s.session}return{vol:v,amt:a,session:sess}},
+  mktPos(){let sum=0,cnt=0;for(const sym of ST.symbols){const s=ST.stocks[sym];if(!s||!s.price||!s.ceil||!s.floor)continue;const rng=s.ceil-s.floor;if(rng<=0)continue;sum+=(s.price-s.floor)/rng;cnt++}return cnt>0?sum/cnt*100:50},
+  score(){const b=A.breadth(),p=A.pressure(),ff=A.foreign();const bs=b.total>0?b.up/b.total*100:50;const ofiN=Math.tanh(OFI.agg('mid')/5000);const os=50+ofiN*50;return Math.round(bs*0.35+p.buyPct*0.25+ff.buyPct*0.25+os*0.15)},
+};
 
-  const ago = S.ssiLastPoll ? Math.round((Date.now() - S.ssiLastPoll) / 1000) + 's ago' : '--';
-  document.getElementById('pollLabel').textContent = ago;
+// Verdicts
+function scoreV(sc){if(sc>=65)return{t:'Tích cực',c:'up-c'};if(sc>=55)return{t:'Thiên mua',c:'up-c'};if(sc>=45)return{t:'Trung lập',c:'ref-c'};if(sc>=35)return{t:'Thiên bán',c:'down-c'};return{t:'Tiêu cực',c:'down-c'}}
+function breadthV(b){if(b.up>=b.total*0.6)return{t:'Mua rộng',c:'up-c'};if(b.down>=b.total*0.6)return{t:'Bán rộng',c:'down-c'};return{t:'Phân hóa',c:'ref-c'}}
+function bsV(p){if(p.buyPct>=60)return{t:'Mua áp đảo',c:'up-c'};if(p.buyPct>=53)return{t:'Thiên mua',c:'up-c'};if(p.buyPct<=40)return{t:'Bán áp đảo',c:'down-c'};if(p.buyPct<=47)return{t:'Thiên bán',c:'down-c'};return{t:'Cân bằng',c:'ref-c'}}
+function ffV(ff){const n=ff.buyVal-ff.sellVal;if(n>50e9)return{t:'NN gom',c:'up-c'};if(n<-50e9)return{t:'NN xả',c:'down-c'};return{t:'NN trung lập',c:'ref-c'}}
 
-  const tot = A.totals();
-  document.getElementById('sessionLabel').textContent = SESSION_MAP[tot.session] || tot.session || '--';
-
-  const ofiTag = document.getElementById('ofiTag');
-  if (S.wsConnected) {
-    const count = S.ofiEvents.length;
-    ofiTag.textContent = `${count} events`;
-    ofiTag.className = 'tag ' + (count > 10 ? 'tag-ok' : 'tag-warn');
-  } else {
-    ofiTag.textContent = 'chờ WS';
-    ofiTag.className = 'tag tag-warn';
-  }
-}
-
-function renderOverview() {
-  const b = A.breadth(), p = A.pressure(), ff = A.foreignFlow(), tot = A.totals(), sc = A.score();
-
+// Renderers
+function renderOverview(){
+  const b=A.breadth(),p=A.pressure(),ff=A.foreign(),tot=A.totals(),sc=A.score(),pos=A.mktPos();
   // Gauge
-  document.getElementById('gaugeNeedle').setAttribute('transform', `rotate(${(sc / 100) * 180 - 90},100,110)`);
-  const sv = document.getElementById('scoreVal');
-  sv.textContent = sc;
-  sv.className = 'gauge-value ' + (sc >= 60 ? 'up-c' : sc <= 40 ? 'down-c' : 'ref-c');
-
+  document.getElementById('gaugeNeedle').setAttribute('transform','rotate('+(sc/100*180-90)+',100,110)');
+  const sv=document.getElementById('scoreVal');sv.textContent=sc;sv.className='gauge-value '+(sc>=55?'up-c':sc<=45?'down-c':'ref-c');
+  const vd=scoreV(sc),ve=document.getElementById('scoreVerdict');ve.textContent=vd.t;ve.className='verdict '+vd.c;
+  // Signal tag
+  const regime=OFI.regime(),stag=document.getElementById('signalTag');
+  if(regime.type!=='wait'&&regime.type!=='neutral'){stag.style.display='inline-block';stag.textContent=regime.tag;stag.className='signal-tag '+regime.cls;stag.style.background=regime.bg||'var(--bg3)'}
+  else if(regime.type==='wait'){stag.style.display='inline-block';stag.textContent=regime.tag;stag.className='signal-tag ref-c';stag.style.background='var(--bg3)'}
+  else{stag.style.display='none'}
+  // Position
+  document.getElementById('mktPosNeedle').style.left=Math.max(0,Math.min(100,pos))+'%';document.getElementById('mktPosLabel').textContent=pos.toFixed(0);
+  // Session
+  document.getElementById('sessionLabel').textContent=SESS[tot.session]||tot.session||'--';
+  updateConn(ST.wsOk?'ok':ST.dataOk?'connecting':'off',ST.wsOk?'Đang cập nhật':ST.dataOk?'Dữ liệu OK':'Kết nối...');
   // Breadth
-  const tl = b.total || 1;
-  const segUp = document.getElementById('segUp');
-  const segRef = document.getElementById('segRef');
-  const segDown = document.getElementById('segDown');
-  segUp.style.width = Math.max(b.up / tl * 100, b.up > 0 ? 8 : 0) + '%'; segUp.textContent = b.up;
-  segRef.style.width = Math.max(b.ref / tl * 100, b.ref > 0 ? 8 : 0) + '%'; segRef.textContent = b.ref;
-  segDown.style.width = Math.max(b.down / tl * 100, b.down > 0 ? 8 : 0) + '%'; segDown.textContent = b.down;
-
-  document.getElementById('bUp').textContent = b.up;
-  document.getElementById('bRef').textContent = b.ref;
-  document.getElementById('bDown').textContent = b.down;
-  const netEl = document.getElementById('bNet');
-  netEl.textContent = (b.net >= 0 ? '+' : '') + b.net;
-  netEl.className = b.net > 0 ? 'up-c' : b.net < 0 ? 'down-c' : 'ref-c';
-
+  const tl=b.total||1;
+  document.getElementById('segUp').style.width=Math.max(b.up/tl*100,b.up>0?8:0)+'%';document.getElementById('segUp').textContent=b.up;
+  document.getElementById('segRef').style.width=Math.max(b.ref/tl*100,b.ref>0?8:0)+'%';document.getElementById('segRef').textContent=b.ref;
+  document.getElementById('segDown').style.width=Math.max(b.down/tl*100,b.down>0?8:0)+'%';document.getElementById('segDown').textContent=b.down;
+  document.getElementById('bUp').textContent=b.up;document.getElementById('bRef').textContent=b.ref;document.getElementById('bDown').textContent=b.down;
+  const bv=breadthV(b);document.getElementById('breadthVerdict').textContent=bv.t;document.getElementById('breadthVerdict').className='ind-verdict '+bv.c;
   // Totals
-  document.getElementById('totalVal').textContent = fmt(tot.amt);
-  document.getElementById('totalVol').textContent = fmt(tot.vol);
-  document.getElementById('sessionId').textContent = SESSION_MAP[tot.session] || tot.session;
-
+  document.getElementById('totalVal').textContent=fmt(tot.amt);document.getElementById('totalVol').textContent=fmt(tot.vol);
   // Buy/Sell
-  document.getElementById('buyBar').style.width = p.buyPct + '%';
-  document.getElementById('buyBar').textContent = p.buyPct.toFixed(1) + '%';
-  document.getElementById('buyVol').textContent = fmt(p.totalBuy);
-  document.getElementById('sellVol').textContent = fmt(p.totalSell);
-  const net = p.totalBuy - p.totalSell;
-  const nE = document.getElementById('netBuy');
-  nE.textContent = (net >= 0 ? '+' : '') + fmt(net);
-  nE.className = 'stat-val ' + (net >= 0 ? 'up-c' : 'down-c');
-
-  // Foreign Flow
-  document.getElementById('ffBar').style.width = ff.buyPct + '%';
-  document.getElementById('ffBar').textContent = ff.buyPct.toFixed(1) + '%';
-  document.getElementById('ffBuy').textContent = fmt(ff.totalBuyVal);
-  document.getElementById('ffSell').textContent = fmt(ff.totalSellVal);
-  const ffNetVal = ff.totalBuyVal - ff.totalSellVal;
-  const ffE = document.getElementById('ffNet');
-  ffE.textContent = (ffNetVal >= 0 ? '+' : '') + fmt(ffNetVal);
-  ffE.className = 'stat-val ' + (ffNetVal >= 0 ? 'up-c' : 'down-c');
-
-  // OFI rolling windows
-  const ofi1 = OFI.calc(60 * 1000);
-  const ofi5 = OFI.calc(5 * 60 * 1000);
-  const ofi15 = OFI.calc(15 * 60 * 1000);
-
-  const ofiEl = (id, v) => {
-    const el = document.getElementById(id);
-    el.textContent = (v >= 0 ? '+' : '') + fmt(v);
-    el.className = 'val ' + (v > 0 ? 'up-c' : v < 0 ? 'down-c' : 'ref-c');
-  };
-  ofiEl('ofi1m', ofi1);
-  ofiEl('ofi5m', ofi5);
-  ofiEl('ofi15m', ofi15);
-
-  // OFI sparkline
-  const hist = S.ofiHistory;
-  if (hist.length > 1) {
-    const c = document.getElementById('ofiChart');
-    const ctx = c.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const W = c.width = c.offsetWidth * dpr;
-    const H = c.height = 50 * dpr;
-    ctx.clearRect(0, 0, W, H);
-
-    const vals = hist.map(h => h.v);
-    const mn = Math.min(...vals), mx = Math.max(...vals), rng = Math.max(mx - mn, 1);
-
-    // Zero line
-    if (mn < 0 && mx > 0) {
-      const zy = H - ((0 - mn) / rng) * (H * 0.8) - H * 0.1;
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(100,116,139,.3)';
-      ctx.setLineDash([4, 4]);
-      ctx.moveTo(0, zy);
-      ctx.lineTo(W, zy);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Line
-    ctx.beginPath();
-    ctx.strokeStyle = ofi5 >= 0 ? '#00e09e' : '#ff4d6a';
-    ctx.lineWidth = 1.5 * dpr;
-    hist.forEach((h, i) => {
-      const x = (i / (hist.length - 1)) * W;
-      const y = H - ((h.v - mn) / rng) * (H * 0.8) - H * 0.1;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-  }
+  document.getElementById('buyBar').style.width=p.buyPct+'%';document.getElementById('buyBar').textContent=p.buyPct.toFixed(1)+'%';
+  document.getElementById('buyVol').textContent=fmt(p.buy);document.getElementById('sellVol').textContent=fmt(p.sell);
+  const net=p.buy-p.sell,nE=document.getElementById('netBuy');nE.textContent=(net>=0?'+':'')+fmt(net);nE.className='stat-val '+(net>=0?'up-c':'down-c');
+  const bsv=bsV(p);document.getElementById('bsVerdict').textContent=bsv.t;document.getElementById('bsVerdict').className='ind-verdict '+bsv.c;
+  // Foreign
+  document.getElementById('ffBar').style.width=ff.buyPct+'%';document.getElementById('ffBar').textContent=ff.buyPct.toFixed(1)+'%';
+  document.getElementById('ffBuy').textContent=fmt(ff.buyVal);document.getElementById('ffSell').textContent=fmt(ff.sellVal);
+  const ffNet=ff.buyVal-ff.sellVal,ffE=document.getElementById('ffNet');ffE.textContent=(ffNet>=0?'+':'')+fmt(ffNet);ffE.className='stat-val '+(ffNet>=0?'up-c':'down-c');
+  const fv=ffV(ff);document.getElementById('ffVerdict').textContent=fv.t;document.getElementById('ffVerdict').className='ind-verdict '+fv.c;
+  // OFI
+  const fast=OFI.agg('fast'),mid=OFI.agg('mid'),slow=OFI.agg('slow');
+  const oE=(id,v)=>{const el=document.getElementById(id);el.textContent=(v>=0?'+':'')+fmt(Math.round(v));el.className='val '+(v>0?'up-c':v<0?'down-c':'ref-c')};
+  oE('ofiFast',fast);oE('ofiMid',mid);oE('ofiSlow',slow);
+  document.getElementById('ofiVerdict').textContent=regime.tag;document.getElementById('ofiVerdict').className='ind-verdict '+regime.cls;
+  // Sparkline
+  const hist=ST.ofiHist;
+  if(hist.length>1){const c=document.getElementById('ofiChart'),ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1,W=c.width=c.offsetWidth*dpr,H=c.height=50*dpr;ctx.clearRect(0,0,W,H);const vals=hist.map(h=>h.v),mn=Math.min(...vals),mx=Math.max(...vals),rng=Math.max(mx-mn,1);if(mn<0&&mx>0){const zy=H-((0-mn)/rng)*(H*.8)-H*.1;ctx.beginPath();ctx.strokeStyle='rgba(100,116,139,.3)';ctx.setLineDash([4,4]);ctx.moveTo(0,zy);ctx.lineTo(W,zy);ctx.stroke();ctx.setLineDash([])}ctx.beginPath();ctx.strokeStyle=mid>=0?'#00e09e':'#ff4d6a';ctx.lineWidth=1.5*dpr;hist.forEach((h,i)=>{const x=(i/(hist.length-1))*W,y=H-((h.v-mn)/rng)*(H*.8)-H*.1;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.stroke()}
 }
 
-function renderHeatmap() {
-  const z = A.zones();
-  const max = Math.max(1, z.ceil, z.sUp, z.lUp, z.ref, z.lDown, z.sDown, z.floor);
-  const zd = [
-    { l: 'Trần', c: 'var(--ceil)', n: z.ceil },
-    { l: 'Tăng mạnh', c: 'var(--green)', n: z.sUp },
-    { l: 'Tăng nhẹ', c: '#4ade80', n: z.lUp },
-    { l: 'Tham chiếu', c: 'var(--yellow)', n: z.ref },
-    { l: 'Giảm nhẹ', c: '#fb923c', n: z.lDown },
-    { l: 'Giảm mạnh', c: 'var(--red)', n: z.sDown },
-    { l: 'Sàn', c: 'var(--floor)', n: z.floor },
-  ];
-  document.getElementById('zoneChart').innerHTML = zd.map(z =>
-    `<div class="zone-row"><div class="zone-label" style="color:${z.c}">${z.l}</div><div class="zone-bar-wrap"><div class="zone-bar" style="width:${z.n/max*100}%;background:${z.c}"></div></div><div class="zone-count" style="color:${z.c}">${z.n}</div></div>`
-  ).join('');
-
-  const { topUp, topDown, topVol } = A.topMovers();
-  const mkR = (m, isVal) => `<tr><td class="sym">${m.sym}</td><td class="text-r ${prC(m.price, m.stk)}">${fP(m.price)}</td><td class="text-r ${pC(m.pct)}">${m.pct >= 0 ? '+' : ''}${m.pct.toFixed(2)}%</td><td class="text-r">${fmt(isVal ? m.value : m.vol)}</td></tr>`;
-  document.getElementById('topUp').innerHTML = topUp.map(m => mkR(m)).join('');
-  document.getElementById('topDown').innerHTML = topDown.map(m => mkR(m)).join('');
-  document.getElementById('topVol').innerHTML = topVol.map(m => mkR(m, true)).join('');
+function renderHeatmap(){
+  const z=A.zones(),max=Math.max(1,z.ceil,z.sUp,z.lUp,z.ref,z.lDown,z.sDown,z.floor);
+  const zd=[{l:'Trần',c:'var(--ceil)',n:z.ceil},{l:'Tăng mạnh',c:'var(--green)',n:z.sUp},{l:'Tăng nhẹ',c:'#4ade80',n:z.lUp},{l:'Tham chiếu',c:'var(--yellow)',n:z.ref},{l:'Giảm nhẹ',c:'#fb923c',n:z.lDown},{l:'Giảm mạnh',c:'var(--red)',n:z.sDown},{l:'Sàn',c:'var(--floor)',n:z.floor}];
+  document.getElementById('zoneChart').innerHTML=zd.map(z=>'<div class="zone-row"><div class="zone-label" style="color:'+z.c+'">'+z.l+'</div><div class="zone-bar-wrap"><div class="zone-bar" style="width:'+z.n/max*100+'%;background:'+z.c+'"></div></div><div class="zone-count" style="color:'+z.c+'">'+z.n+'</div></div>').join('');
+  const{topUp,topDown,topVol}=A.topMovers();
+  const mkR=(m,isVal)=>'<tr><td class="sym">'+m.sym+'</td><td class="text-r '+prC(m.price,m.stk)+'">'+fP(m.price)+'</td><td class="text-r '+pC(m.pct)+'">'+(m.pct>=0?'+':'')+m.pct.toFixed(2)+'%</td><td class="text-r">'+fmt(isVal?m.value:m.vol)+'</td></tr>';
+  document.getElementById('topUp').innerHTML=topUp.map(m=>mkR(m)).join('');
+  document.getElementById('topDown').innerHTML=topDown.map(m=>mkR(m)).join('');
+  document.getElementById('topVol').innerHTML=topVol.map(m=>mkR(m,true)).join('');
 }
 
-function renderSymList() {
-  document.getElementById('symList').innerHTML = S.symbols.map(sym => {
-    const stk = S.stocks[sym];
-    const pct = stk?.pctChange || 0;
-    return `<div class="sym-item ${S.selectedSymbol === sym ? 'active' : ''}" onclick="selectSymbol('${sym}')"><span>${sym}</span><span class="change ${pC(pct)}">${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%</span></div>`;
+function renderSymList(){
+  document.getElementById('symList').innerHTML=ST.symbols.map(sym=>{
+    const s=ST.stocks[sym],pct=s?.pct||0;
+    return'<div class="sym-item '+(ST.selectedSymbol===sym?'active':'')+'" onclick="selectSymbol(\''+sym+'\')"><span>'+sym+'</span><span class="change '+pC(pct)+'">'+(pct>=0?'+':'')+pct.toFixed(2)+'%</span></div>';
   }).join('');
 }
+function selectSymbol(s){ST.selectedSymbol=s;renderSymList();renderOB()}
 
-function selectSymbol(s) { S.selectedSymbol = s; renderSymList(); renderOB(); }
-
-function renderOB() {
-  const sym = S.selectedSymbol;
-  const de = document.getElementById('depthChart');
-  const em = document.getElementById('obEmpty');
-  const ins = document.getElementById('obInsight');
-  document.getElementById('obSymbol').textContent = sym || '---';
-
-  if (!sym) { de.innerHTML = ''; em.style.display = 'block'; ins.style.display = 'none'; return; }
-
-  const stk = S.stocks[sym];
-  if (!stk) { de.innerHTML = '<div class="empty-msg">Chưa có dữ liệu</div>'; em.style.display = 'none'; ins.style.display = 'none'; return; }
-
-  em.style.display = 'none';
-  ins.style.display = 'flex';
-
-  // Header info
-  const prEl = document.getElementById('obPrice');
-  prEl.className = prC(stk.price, stk);
-  prEl.textContent = fP(stk.price);
-  document.getElementById('obCeil').textContent = fP(stk.ceil);
-  document.getElementById('obFloor').textContent = fP(stk.floor);
-  document.getElementById('obRef').textContent = fP(stk.ref);
-
+function renderOB(){
+  const sym=ST.selectedSymbol,de=document.getElementById('depthChart'),em=document.getElementById('obEmpty'),ins=document.getElementById('obInsights'),pw=document.getElementById('obPosWrap');
+  document.getElementById('obSymbol').textContent=sym||'---';
+  if(!sym){de.innerHTML='';em.style.display='block';ins.style.display='none';pw.style.display='none';return}
+  const stk=ST.stocks[sym];
+  if(!stk){de.innerHTML='<div class="empty-msg">Chưa có dữ liệu</div>';em.style.display='none';ins.style.display='none';pw.style.display='none';return}
+  em.style.display='none';ins.style.display='grid';pw.style.display='block';
+  // Price position
+  const rng=stk.ceil-stk.floor,posPct=rng>0?(stk.price-stk.floor)/rng*100:50;
+  document.getElementById('obPosNeedle').style.left=Math.max(0,Math.min(100,posPct))+'%';
+  document.getElementById('obFloorLabel').textContent=fP(stk.floor);document.getElementById('obRefLabel').textContent=fP(stk.ref);document.getElementById('obCeilLabel').textContent=fP(stk.ceil);
   // Insights
-  const bid = stk.bid || [], offer = stk.offer || [];
-  const spread = (bid.length > 0 && offer.length > 0) ? offer[0].price - bid[0].price : 0;
-  const totalBidQty = bid.reduce((a, l) => a + (l.qty || 0), 0);
-  const totalOfferQty = offer.reduce((a, l) => a + (l.qty || 0), 0);
-  const totalQty = totalBidQty + totalOfferQty;
-  const ratio = totalOfferQty > 0 ? (totalBidQty / totalOfferQty) : 0;
-  const imbalance = totalQty > 0 ? ((totalBidQty - totalOfferQty) / totalQty * 100) : 0;
-
-  document.getElementById('obSpread').textContent = fP(spread);
-  const ratioEl = document.getElementById('obRatio');
-  ratioEl.textContent = ratio.toFixed(2);
-  ratioEl.className = 'val ' + (ratio > 1.2 ? 'up-c' : ratio < 0.8 ? 'down-c' : 'ref-c');
-  const imbEl = document.getElementById('obImbalance');
-  imbEl.textContent = (imbalance >= 0 ? '+' : '') + imbalance.toFixed(1) + '%';
-  imbEl.className = 'val ' + (imbalance > 10 ? 'up-c' : imbalance < -10 ? 'down-c' : 'ref-c');
-
-  const ffNet = (stk.foreignBuyVal || 0) - (stk.foreignSellVal || 0);
-  const ffEl = document.getElementById('obForeign');
-  ffEl.textContent = (ffNet >= 0 ? '+' : '') + fmt(ffNet);
-  ffEl.className = 'val ' + (ffNet > 0 ? 'up-c' : ffNet < 0 ? 'down-c' : 'ref-c');
-
-  // Depth chart
-  if (!bid.length && !offer.length) {
-    de.innerHTML = '<div class="empty-msg">Chưa có dữ liệu sổ lệnh</div>';
-    return;
+  const bid=stk.bid||[],offer=stk.offer||[];
+  const spread=(bid.length>0&&offer.length>0)?offer[0].price-bid[0].price:0;
+  const tBid=bid.reduce((a,l)=>a+(l.qty||0),0),tOffer=offer.reduce((a,l)=>a+(l.qty||0),0);
+  const ratio=tOffer>0?(tBid/tOffer):0;
+  document.getElementById('obSpread').textContent=fP(spread);
+  const re=document.getElementById('obRatio');re.textContent=ratio.toFixed(2);re.className='val '+(ratio>1.2?'up-c':ratio<0.8?'down-c':'ref-c');
+  const symOfi=OFI.get(sym,'mid'),oe=document.getElementById('obOfi');
+  oe.textContent=(symOfi>=0?'+':'')+Math.round(symOfi);oe.className='val '+(symOfi>0?'up-c':symOfi<0?'down-c':'ref-c');
+  const ffNet=(stk.fBuyVal||0)-(stk.fSellVal||0),fe=document.getElementById('obForeign');
+  fe.textContent=(ffNet>=0?'+':'')+fmt(ffNet);fe.className='val '+(ffNet>0?'up-c':ffNet<0?'down-c':'ref-c');
+  // Depth
+  if(!bid.length&&!offer.length){de.innerHTML='<div class="empty-msg">Chưa có dữ liệu sổ lệnh</div>';return}
+  const ml=Math.max(bid.length,offer.length),allQ=[...bid.map(l=>l.qty),...offer.map(l=>l.qty)];
+  const mq=Math.max(1,...allQ),avgQ=allQ.reduce((a,b)=>a+b,0)/(allQ.length||1),largeTh=avgQ*2;
+  let h='';
+  for(let i=0;i<ml;i++){
+    const bi=bid[i],ak=offer[i],biL=bi&&bi.qty>largeTh,akL=ak&&ak.qty>largeTh;
+    h+='<div class="depth-grid">';
+    h+='<div style="text-align:right;position:relative;height:28px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px'+(biL?';background:rgba(0,224,158,.06)':'')+'">';
+    if(bi)h+='<div style="position:absolute;right:0;top:0;bottom:0;width:'+bi.qty/mq*100+'%;background:rgba(0,224,158,.15);border-radius:3px"></div><span style="position:relative;font-family:var(--mono);font-size:12px;color:var(--text2)">'+fmt(bi.qty)+(biL?' ●':'')+'</span>';
+    h+='</div><div style="display:flex;align-items:center;justify-content:center;gap:4px;height:28px">';
+    if(bi)h+='<span style="font-family:var(--mono);font-size:12px;font-weight:600" class="'+prC(bi.price,stk)+'">'+fP(bi.price)+'</span>';else h+='<span style="width:36px"></span>';
+    h+='<span style="color:var(--text3);font-size:9px">│</span>';
+    if(ak)h+='<span style="font-family:var(--mono);font-size:12px;font-weight:600" class="'+prC(ak.price,stk)+'">'+fP(ak.price)+'</span>';else h+='<span style="width:36px"></span>';
+    h+='</div><div style="text-align:left;position:relative;height:28px;display:flex;align-items:center;padding-left:6px'+(akL?';background:rgba(255,77,106,.06)':'')+'">';
+    if(ak)h+='<div style="position:absolute;left:0;top:0;bottom:0;width:'+ak.qty/mq*100+'%;background:rgba(255,77,106,.15);border-radius:3px"></div><span style="position:relative;font-family:var(--mono);font-size:12px;color:var(--text2)">'+fmt(ak.qty)+(akL?' ●':'')+'</span>';
+    h+='</div></div>';
   }
-
-  const ml = Math.max(bid.length, offer.length);
-  const allQty = [...bid.map(l => l.qty), ...offer.map(l => l.qty)];
-  const mq = Math.max(1, ...allQty);
-  const avgQty = allQty.reduce((a, b) => a + b, 0) / (allQty.length || 1);
-  const largeThreshold = avgQty * 2;
-
-  let h = '';
-  for (let i = 0; i < ml; i++) {
-    const bi = bid[i], ak = offer[i];
-    const biLarge = bi && bi.qty > largeThreshold;
-    const akLarge = ak && ak.qty > largeThreshold;
-
-    h += `<div class="depth-grid">`;
-    // Bid side
-    h += `<div style="text-align:right;position:relative;height:28px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px${biLarge ? ';background:rgba(0,224,158,.06)' : ''}">`;
-    if (bi) {
-      h += `<div style="position:absolute;right:0;top:0;bottom:0;width:${bi.qty/mq*100}%;background:rgba(0,224,158,.15);border-radius:3px"></div>`;
-      h += `<span style="position:relative;font-family:var(--mono);font-size:12px;color:var(--text2)">${fmt(bi.qty)}${biLarge ? ' ⬤' : ''}</span>`;
-    }
-    h += `</div>`;
-    // Price
-    h += `<div style="display:flex;align-items:center;justify-content:center;gap:4px;height:28px">`;
-    if (bi) h += `<span style="font-family:var(--mono);font-size:12px;font-weight:600" class="${prC(bi.price, stk)}">${fP(bi.price)}</span>`;
-    else h += `<span style="width:36px"></span>`;
-    h += `<span style="color:var(--text3);font-size:9px">│</span>`;
-    if (ak) h += `<span style="font-family:var(--mono);font-size:12px;font-weight:600" class="${prC(ak.price, stk)}">${fP(ak.price)}</span>`;
-    else h += `<span style="width:36px"></span>`;
-    h += `</div>`;
-    // Offer side
-    h += `<div style="text-align:left;position:relative;height:28px;display:flex;align-items:center;padding-left:6px${akLarge ? ';background:rgba(255,77,106,.06)' : ''}">`;
-    if (ak) {
-      h += `<div style="position:absolute;left:0;top:0;bottom:0;width:${ak.qty/mq*100}%;background:rgba(255,77,106,.15);border-radius:3px"></div>`;
-      h += `<span style="position:relative;font-family:var(--mono);font-size:12px;color:var(--text2)">${fmt(ak.qty)}${akLarge ? ' ⬤' : ''}</span>`;
-    }
-    h += `</div></div>`;
-  }
-
-  // Summary row
-  h += `<div class="depth-grid" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">`;
-  h += `<div style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--green)">${fmt(totalBidQty)}</div>`;
-  h += `<div style="text-align:center;font-size:10px;color:var(--text3)">TỔNG</div>`;
-  h += `<div style="text-align:left;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--red)">${fmt(totalOfferQty)}</div>`;
-  h += `</div>`;
-
-  de.innerHTML = h;
+  h+='<div class="depth-grid" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><div style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--green)">'+fmt(tBid)+'</div><div style="text-align:center;font-size:10px;color:var(--text3)">Tổng</div><div style="text-align:left;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--red)">'+fmt(tOffer)+'</div></div>';
+  de.innerHTML=h;
 }
 
-// Tab switching
-document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  tab.classList.add('active');
-  document.getElementById('p-' + tab.dataset.tab).classList.add('active');
+// Tabs
+document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  tab.classList.add('active');document.getElementById('p-'+tab.dataset.tab).classList.add('active');
 }));
 
-// ═══════════════════════════════════════════════════════════════
-// 10. MAIN
-// ═══════════════════════════════════════════════════════════════
-function render() {
-  updateStatusBar();
-  OFI.prune();
+// Main
+function render(){
   OFI.snapshot();
-
-  const at = document.querySelector('.tab.active').dataset.tab;
-  if (at === 'overview') renderOverview();
-  else if (at === 'heatmap') renderHeatmap();
-  else if (at === 'orderbook') { renderSymList(); renderOB(); }
+  const at=document.querySelector('.tab.active').dataset.tab;
+  if(at==='overview')renderOverview();else if(at==='heatmap')renderHeatmap();else if(at==='orderbook'){renderSymList();renderOB()}
 }
 
-async function init() {
-  setTimeout(hideLoading, 30000); // safety net
-
-  setLoading(20, 'Tải dữ liệu VN30 từ SSI...');
-  const ok = await SSI.poll();
-  if (ok) {
-    setLoading(60, `Đã tải ${S.symbols.length} mã. Kết nối WebSocket...`);
-  } else {
-    setLoading(60, 'SSI lỗi, thử lại...');
-    await SSI.poll(); // retry once
-  }
-
-  // Start WS for OFI (non-blocking)
+async function init(){
+  setTimeout(hideLoading,20000);
+  setLoading(20,'Tải dữ liệu VN30...');
+  let ok=await DataAPI.poll();if(!ok){setLoading(40,'Thử lại...');ok=await DataAPI.poll()}
+  setLoading(80,ST.symbols.length+' mã đã tải');
   WS.connect();
-
-  // Render loop
-  setInterval(render, CONFIG.renderMs);
-  render();
-  hideLoading();
-
-  // SSI poll loop
-  setInterval(async () => {
-    await SSI.poll();
-  }, CONFIG.ssiPollMs);
+  setInterval(render,CFG.renderMs);render();hideLoading();
+  setInterval(()=>DataAPI.poll(),CFG.pollMs);
 }
-
 init();
 </script>
 </body>
