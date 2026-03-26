@@ -318,22 +318,22 @@ const RestAPI = {
   async get(path, query) {
     const qs = query ? Object.entries(query).filter(([,v])=>v!=null).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&') : '';
     const search = qs ? '?' + qs : '';
-    // Auth headers are computed on original path (not proxy path)
     const h = await RestAPI.headers('GET', path);
-
-    // Try proxy first, fallback to direct
     const urls = [
-      CONFIG.proxyUrl + path + search,  // via Cloudflare Worker proxy
-      CONFIG.restUrl + path + search,    // direct (may fail CORS)
+      CONFIG.proxyUrl + path + search,
+      CONFIG.restUrl + path + search,
     ];
     for (const url of urls) {
       try {
-        const r = await fetch(url, {headers: h});
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 8000); // 8s timeout
+        const r = await fetch(url, {headers: h, signal: ctrl.signal});
+        clearTimeout(timer);
         if (!r.ok) continue;
         return r.json();
       } catch(e) { continue; }
     }
-    throw new Error('All endpoints failed (CORS)');
+    throw new Error('All endpoints failed');
   },
 
   // ── 1. SecDef ──
@@ -679,6 +679,9 @@ function render() {
 }
 
 async function init() {
+  // Safety: hide loading after 30s no matter what
+  setTimeout(hideLoading, 30000);
+
   // 1. Try localStorage cache
   const restored = Storage.load();
 
@@ -704,9 +707,6 @@ async function init() {
   setInterval(() => {
     if (Object.keys(state.trades).length > 0) Storage.save();
   }, CONFIG.saveInterval);
-
-  // If WS fails to connect within 5s, still hide loading
-  setTimeout(hideLoading, 8000);
 }
 
 init();
