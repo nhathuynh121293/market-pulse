@@ -637,12 +637,13 @@ const O={
 
 // ═══ BUSINESS TIME MAPPER (compress lunch gap) ═══
 function bizTimeMap(sortedTimes,cW,ML,dpr){
-  const GT=180000,GV=14*dpr; // gap threshold 3min, visual gap 14px
-  if(sortedTimes.length<2){return{map:()=>ML,gaps:[],gv:0}}
+  const GT=180000,GV=14*dpr;
+  const noGap={inGap:()=>false};
+  if(sortedTimes.length<2){return{map:()=>ML,gaps:[],gv:0,...noGap}}
   const gaps=[];
   for(let i=1;i<sortedTimes.length;i++){const dt=sortedTimes[i]-sortedTimes[i-1];if(dt>GT)gaps.push({s:sortedTimes[i-1],e:sortedTimes[i],d:dt})}
   const tMin=sortedTimes[0],tMax=sortedTimes[sortedTimes.length-1];
-  if(!gaps.length){const r=Math.max(tMax-tMin,1000);return{map:t=>ML+((t-tMin)/r)*cW,gaps:[],gv:0}}
+  if(!gaps.length){const r=Math.max(tMax-tMin,1000);return{map:t=>ML+((t-tMin)/r)*cW,gaps:[],gv:0,...noGap}}
   const totalGap=gaps.reduce((a,g)=>a+g.d,0);
   const tradSpan=Math.max((tMax-tMin)-totalGap,1);
   const dataW=Math.max(cW-gaps.length*GV,cW*0.4);
@@ -778,7 +779,7 @@ function drawDivChart(canvas,sym){
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
   const W=canvas.width=canvas.offsetWidth*dpr;
-  const H=canvas.height=(parseInt(canvas.getAttribute('height'))||180)*dpr;
+  const H=canvas.height=(parseInt(canvas.getAttribute('height'))||160)*dpr;
   ctx.clearRect(0,0,W,H);
   const ML=5*dpr,MR=5*dpr,MT=3*dpr,MB=16*dpr,GAP=10*dpr;
   const cW=W-ML-MR;
@@ -1114,7 +1115,7 @@ function renderDetail(){
 
   // Divergence chart: Price % vs OFI (stacked panels)
   if(S.sPrH[sym]&&S.sPrH[sym].length>3&&S.sOfiH[sym]&&S.sOfiH[sym].length>3){
-    h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Giá % vs OFI — '+sym+'</span><div class="div-chart-legend"><span style="color:var(--cyan)">■ Giá %</span><span style="color:var(--yellow)">■ OFI</span><span style="color:var(--text3);font-style:italic;font-size:9px">vùng tô = phân kỳ</span></div></div><canvas id="divChart" height="180" style="width:100%;border-radius:4px"></canvas></div>';
+    h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Giá % vs OFI — '+sym+'</span><div class="div-chart-legend"><span style="color:var(--cyan)">■ Giá %</span><span style="color:var(--yellow)">■ OFI</span><span style="color:var(--text3);font-style:italic;font-size:9px">vùng tô = phân kỳ</span></div></div><canvas id="divChart" height="160" style="width:100%;border-radius:4px"></canvas></div>';
   }
 
   // Cumulative Delta chart + stats
@@ -1126,7 +1127,7 @@ function renderDetail(){
 
     // Cumulative Delta sparkline (chart first)
     if(cd.history.length>3){
-      h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Cumulative Delta — '+sym+'</span><span class="'+cdLbl.c+'" style="font-family:var(--mono);font-size:12px;font-weight:700">'+cdLbl.t+'</span></div><canvas id="cdChart" height="120" style="width:100%;border-radius:4px"></canvas></div>';
+      h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Cumulative Delta — '+sym+'</span><span class="'+cdLbl.c+'" style="font-family:var(--mono);font-size:12px;font-weight:700">'+cdLbl.t+'</span></div><canvas id="cdChart" height="90" style="width:100%;border-radius:4px"></canvas></div>';
     }
 
     // Exhaustion
@@ -1148,12 +1149,12 @@ function renderDetail(){
     }
 
     // Stats row
-    h+='<div style="margin-top:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Lệnh khớp chủ động <span style="text-transform:none;font-weight:400;letter-spacing:0;font-style:italic">(khác OFI — đo lệnh khớp thực, không phải sổ lệnh chờ)</span></div></div>';
+    h+='<div style="margin-top:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Lệnh khớp chủ động</div></div>';
     const cdN=cdNorm(sym);
     const cdNLbl=Math.abs(cdN)<10?{t:'Cân bằng',c:'ref-c'}:cdN>0?{t:'Mua '+cdN.toFixed(0)+'%',c:'up-c'}:{t:'Bán '+Math.abs(cdN).toFixed(0)+'%',c:'down-c'};
     h+='<div class="detail-grid" style="margin-top:8px">';
     h+='<div class="dstat"><div class="label">Cumulative Delta</div><div class="val '+cdLbl.c+'">'+cdLbl.t+'</div><div class="sub">B:'+fmt(cd.buyVol)+' S:'+fmt(cd.sellVol)+'</div></div>';
-    h+='<div class="dstat"><div class="label">B/S RT</div><div class="val '+(cdBuyPct>55?'up-c':cdBuyPct<45?'down-c':'ref-c')+'">'+cdBuyPct.toFixed(0)+'%</div>';
+    h+='<div class="dstat"><div class="label">Tỷ lệ Mua</div><div class="val '+(cdBuyPct>55?'up-c':cdBuyPct<45?'down-c':'ref-c')+'">'+cdBuyPct.toFixed(0)+'%</div>';
     h+='<div style="margin-top:4px"><div style="height:6px;border-radius:3px;background:var(--bg3);overflow:hidden"><div style="height:100%;width:'+cdBuyPct+'%;background:'+(cdBuyPct>55?'var(--green)':cdBuyPct<45?'var(--red)':'var(--text3)')+';border-radius:3px;transition:width .3s"></div></div></div></div>';
     h+='<div class="dstat"><div class="label">Exhaustion</div><div class="val '+exhLbl.c+'">'+exhLbl.t+'</div>'+(S.sideMode!=='auto'?'<div class="sub" style="color:var(--text3)">Side: '+S.sideMode+'</div>':'')+'</div>';
     h+='</div>';
@@ -1344,6 +1345,7 @@ const LS={
         sel:S.sel,pins:S.pins,sortK:S.sortK,sortA:S.sortA,scanWide:S.scanWide,pinnedCompact:S.pinnedCompact,
         ofiH:S.ofiH,sOfiH:S.sOfiH,sOfi:S.sOfi,prH:S.prH,sPrH:S.sPrH,
         ofiN:S.ofiN,notifications:S.notifications,
+        cumDelta:S.cumDelta,sideMode:S.sideMode,
         date:new Date().toLocaleDateString('sv-SE'),
         savedAt:Date.now(),
       };
@@ -1372,7 +1374,9 @@ const LS={
         if(d.sPrH)S.sPrH=d.sPrH;
         if(d.ofiN)S.ofiN=d.ofiN;
         if(d.notifications)S.notifications=d.notifications;
-        console.log('[LS] Restored OFI data, age:',Math.round((Date.now()-d.savedAt)/1000)+'s');
+        if(d.cumDelta)S.cumDelta=d.cumDelta;
+        if(d.sideMode&&d.sideMode!=='auto')S.sideMode=d.sideMode;
+        console.log('[LS] Restored OFI+CVD data, age:',Math.round((Date.now()-d.savedAt)/1000)+'s');
       }else{
         console.log('[LS] OFI data expired, fresh start');
       }
