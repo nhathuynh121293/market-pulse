@@ -137,11 +137,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .scan-toggle:hover{color:var(--cyan);border-color:var(--cyan)}
 .scan-header{display:grid;gap:4px;padding:4px 6px;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;position:sticky;top:0;background:var(--bg2);z-index:2}
 .scan-header.compact{grid-template-columns:46px 50px 40px 1fr 26px}
-.scan-header.wide{grid-template-columns:46px 50px 40px 50px 1fr 26px}
+.scan-header.wide{grid-template-columns:46px 50px 40px 50px 1fr 1fr 26px}
 .scan-header>div:hover{color:var(--cyan)}.scan-header .sa{color:var(--cyan)}
 .scan-row{display:grid;gap:4px;padding:5px 6px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:.1s;border-bottom:1px solid var(--border);align-items:center}
 .scan-row.compact{grid-template-columns:46px 50px 40px 1fr 26px}
-.scan-row.wide{grid-template-columns:46px 50px 40px 50px 1fr 26px}
+.scan-row.wide{grid-template-columns:46px 50px 40px 50px 1fr 1fr 26px}
 .scan-row:hover{background:var(--bg3)}.scan-row.active{background:var(--blue-bg)}
 .scan-sym{font-weight:700;font-size:13px}
 .scan-row.div-bull{border-left:3px solid var(--green)}.scan-row.div-bear{border-left:3px solid var(--red)}
@@ -394,6 +394,7 @@ const sFfPct=s=>{if(!s||!s.value)return 0;return((s.fBuyVal||0)-(s.fSellVal||0))
 const ofiNorm=(raw,sym)=>{const s=S.stk[sym];if(!s)return 0;const ref=Math.max(s.vol*C.NORM_F,100);return Math.tanh(raw/ref)*100};
 const ofiLbl=n=>Math.abs(n)<15?{t:'Trung tính',c:'ref-c'}:n>=60?{t:'Mua mạnh',c:'up-c'}:n>=15?{t:'Thiên mua',c:'up-c'}:n<=-60?{t:'Bán mạnh',c:'down-c'}:{t:'Thiên bán',c:'down-c'};
 function ofiBarHTML(norm,h){h=h||8;const pct=Math.min(Math.abs(norm),100),w=pct/2,left=norm>=0?50:50-w,clr=norm>0?'var(--green)':norm<0?'var(--red)':'var(--text3)';return '<div style="height:'+h+'px;border-radius:'+(h/2)+'px;background:var(--bg3);position:relative;overflow:hidden"><div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border2)"></div><div style="position:absolute;top:1px;bottom:1px;left:'+left+'%;width:'+w+'%;background:'+clr+';border-radius:'+(h/2)+'px;transition:left .3s,width .3s"></div></div>'}
+const cdNorm=sym=>{const cd=S.cumDelta[sym];if(!cd)return 0;const total=cd.buyVol+cd.sellVol;return total>0?(cd.running/total)*100:0};
 function timeStr(ts){const d=new Date(ts);return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')}
 function setLoading(p,t){document.getElementById('loadingFill').style.width=p+'%';if(t)document.getElementById('loadingText').textContent=t}
 function hideLoading(){document.getElementById('loadingOverlay').classList.add('hide');setTimeout(()=>document.getElementById('loadingOverlay').style.display='none',600)}
@@ -634,6 +635,34 @@ const O={
   },
 };
 
+// ═══ BUSINESS TIME MAPPER (compress lunch gap) ═══
+function bizTimeMap(sortedTimes,cW,ML,dpr){
+  const GT=180000,GV=14*dpr; // gap threshold 3min, visual gap 14px
+  if(sortedTimes.length<2){return{map:()=>ML,gaps:[],gv:0}}
+  const gaps=[];
+  for(let i=1;i<sortedTimes.length;i++){const dt=sortedTimes[i]-sortedTimes[i-1];if(dt>GT)gaps.push({s:sortedTimes[i-1],e:sortedTimes[i],d:dt})}
+  const tMin=sortedTimes[0],tMax=sortedTimes[sortedTimes.length-1];
+  if(!gaps.length){const r=Math.max(tMax-tMin,1000);return{map:t=>ML+((t-tMin)/r)*cW,gaps:[],gv:0}}
+  const totalGap=gaps.reduce((a,g)=>a+g.d,0);
+  const tradSpan=Math.max((tMax-tMin)-totalGap,1);
+  const dataW=Math.max(cW-gaps.length*GV,cW*0.4);
+  const gv=gaps.length>0?(cW-dataW)/gaps.length:0;
+  return{
+    map(t){
+      let bt=t-tMin,gb=0;
+      for(const g of gaps){
+        if(t<=g.s)break;
+        if(t>=g.e){bt-=g.d;gb++}
+        else{bt-=(t-g.s);return ML+(bt/tradSpan)*dataW+gb*gv+gv*0.5}
+      }
+      return ML+(bt/tradSpan)*dataW+gb*gv;
+    },
+    gaps,gv,
+    // Map a real timestamp to check if it falls inside a gap
+    inGap(t){for(const g of gaps){if(t>g.s&&t<g.e)return true}return false}
+  };
+}
+
 // ═══ CHART ENGINE ═══
 function drawOfiChart(canvas,dataArr,label){
   if(!dataArr||dataArr.length<2){
@@ -647,21 +676,18 @@ function drawOfiChart(canvas,dataArr,label){
   const H=canvas.height=(canvas.getAttribute('height')||80)*dpr;
   ctx.clearRect(0,0,W,H);
 
-  // Margins for time axis
   const ML=5*dpr, MR=5*dpr, MT=5*dpr, MB=16*dpr;
   const cW=W-ML-MR, cH=H-MT-MB;
 
-  // Get time range
-  const tMin=dataArr[0].t||dataArr[0].time;
-  const tMax=dataArr[dataArr.length-1].t||dataArr[dataArr.length-1].time;
-  const tRange=Math.max(tMax-tMin,1000);
+  // Business time mapping (compress lunch gap)
+  const times=dataArr.map(p=>p.t||p.time);
+  const btm=bizTimeMap(times,cW,ML,dpr);
+  const tToX=t=>btm.map(t);
+  const tMin=times[0],tMax=times[times.length-1];
 
-  // Get value range
   const vals=dataArr.map(p=>p.v);
   const vMin=Math.min(...vals,-3), vMax=Math.max(...vals,3);
   const vRange=Math.max(vMax-vMin,1);
-
-  const tToX=t=>ML+((t-tMin)/tRange)*cW;
   const vToY=v=>MT+cH-((v-vMin)/vRange)*cH;
 
   // Zero line
@@ -671,7 +697,19 @@ function drawOfiChart(canvas,dataArr,label){
     ctx.moveTo(ML,zy);ctx.lineTo(W-MR,zy);ctx.stroke();ctx.setLineDash([]);
   }
 
-  // Find segments (split at gaps > 60s)
+  // Draw compressed gap markers
+  for(const g of btm.gaps){
+    const gx1=tToX(g.s),gx2=tToX(g.e);
+    ctx.fillStyle=tc.gap;
+    ctx.fillRect(gx1,MT,gx2-gx1,cH);
+    // Diagonal hatching
+    ctx.save();ctx.beginPath();ctx.rect(gx1,MT,gx2-gx1,cH);ctx.clip();
+    ctx.strokeStyle=tc.gap2;ctx.lineWidth=1*dpr;
+    for(let j=-cH;j<(gx2-gx1)+cH;j+=6*dpr){ctx.beginPath();ctx.moveTo(gx1+j,MT);ctx.lineTo(gx1+j-cH,MT+cH);ctx.stroke()}
+    ctx.restore();
+  }
+
+  // Find segments (split at gaps)
   const GAP_THRESH=180000;
   const segments=[];
   let seg=[];
@@ -679,18 +717,7 @@ function drawOfiChart(canvas,dataArr,label){
     const t=dataArr[i].t||dataArr[i].time;
     if(seg.length>0){
       const prevT=seg[seg.length-1].t||seg[seg.length-1].time;
-      if(t-prevT>GAP_THRESH){
-        segments.push(seg);
-        const gapStart=prevT, gapEnd=t;
-        const gx1=tToX(gapStart),gx2=tToX(gapEnd);
-        ctx.fillStyle=tc.gap;
-        ctx.fillRect(gx1,MT,gx2-gx1,cH);
-        ctx.save();ctx.beginPath();ctx.rect(gx1,MT,gx2-gx1,cH);ctx.clip();
-        ctx.strokeStyle=tc.gap2;ctx.lineWidth=1*dpr;
-        for(let j=-cH;j<(gx2-gx1)+cH;j+=8*dpr){ctx.beginPath();ctx.moveTo(gx1+j,MT);ctx.lineTo(gx1+j-cH,MT+cH);ctx.stroke()}
-        ctx.restore();
-        seg=[];
-      }
+      if(t-prevT>GAP_THRESH){segments.push(seg);seg=[]}
     }
     seg.push(dataArr[i]);
   }
@@ -718,7 +745,7 @@ function drawOfiChart(canvas,dataArr,label){
     ctx.strokeStyle=lastV>=0?tc.green:tc.red;ctx.stroke();
   }
 
-  // Time axis labels
+  // Time axis labels (skip labels inside gaps)
   ctx.fillStyle=tc.text;
   ctx.font=(9*dpr)+'px "JetBrains Mono"';
   ctx.textAlign='center';
@@ -726,10 +753,9 @@ function drawOfiChart(canvas,dataArr,label){
   const firstDate=new Date(tMin);
   let tickTime=new Date(firstDate);
   tickTime.setMinutes(Math.ceil(tickTime.getMinutes()/30)*30,0,0);
-  const tickMs=tickTime.getTime();
 
-  for(let t=tickMs;t<=tMax;t+=30*60*1000){
-    if(t<tMin)continue;
+  for(let t=tickTime.getTime();t<=tMax;t+=30*60*1000){
+    if(t<tMin||btm.inGap(t))continue;
     const x=tToX(t);
     if(x<ML+20*dpr||x>W-MR-20*dpr)continue;
     ctx.beginPath();ctx.strokeStyle=tc.grid2;ctx.lineWidth=1*dpr;
@@ -744,7 +770,7 @@ function drawOfiChart(canvas,dataArr,label){
   ctx.fillText(timeStr(tMax),W-MR,H-2*dpr);
 }
 
-// ═══ DIVERGENCE CHART (dual-line: Price % vs OFI) ═══
+// ═══ DIVERGENCE CHART (stacked: Price % panel + OFI panel, shared time axis) ═══
 function drawDivChart(canvas,sym){
   const prData=S.sPrH[sym],ofiData=S.sOfiH[sym];
   if(!prData||prData.length<3||!ofiData||ofiData.length<3)return;
@@ -752,29 +778,51 @@ function drawDivChart(canvas,sym){
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
   const W=canvas.width=canvas.offsetWidth*dpr;
-  const H=canvas.height=(parseInt(canvas.getAttribute('height'))||140)*dpr;
+  const H=canvas.height=(parseInt(canvas.getAttribute('height'))||180)*dpr;
   ctx.clearRect(0,0,W,H);
-  const ML=5*dpr,MR=5*dpr,MT=5*dpr,MB=16*dpr;
-  const cW=W-ML-MR,cH=H-MT-MB;
+  const ML=5*dpr,MR=5*dpr,MT=3*dpr,MB=16*dpr,GAP=10*dpr;
+  const cW=W-ML-MR;
+  const pH=(H-MT-MB-GAP)/2; // panel height
 
-  const tMin=Math.min(prData[0].t,ofiData[0].t);
-  const tMax=Math.max(prData[prData.length-1].t,ofiData[ofiData.length-1].t);
-  const tRange=Math.max(tMax-tMin,1000);
-  const tToX=t=>ML+((t-tMin)/tRange)*cW;
+  // Shared time range with business time mapping
+  const allTimes=[...prData.map(p=>p.t),...ofiData.map(p=>p.t)].sort((a,b)=>a-b);
+  const tMin=allTimes[0],tMax=allTimes[allTimes.length-1];
+  const btm=bizTimeMap(allTimes,cW,ML,dpr);
+  const tToX=t=>btm.map(t);
 
+  // Price scale
   const prVals=prData.map(p=>p.pct);
-  const prMin=Math.min(...prVals),prMax=Math.max(...prVals);
+  const prMin=Math.min(...prVals,0),prMax=Math.max(...prVals,0);
   const prRange=Math.max(prMax-prMin,0.01);
-  const prToY=v=>MT+cH-((v-prMin)/prRange)*cH;
+  const p1Top=MT,p1Bot=MT+pH;
+  const prToY=v=>p1Top+pH-((v-prMin)/prRange)*pH;
 
+  // OFI scale
   const ofiVals=ofiData.map(p=>p.v);
-  const ofiMin=Math.min(...ofiVals),ofiMax=Math.max(...ofiVals);
+  const ofiMin=Math.min(...ofiVals,0),ofiMax=Math.max(...ofiVals,0);
   const ofiRange=Math.max(ofiMax-ofiMin,1);
-  const ofiToY=v=>MT+cH-((v-ofiMin)/ofiRange)*cH;
+  const p2Top=MT+pH+GAP,p2Bot=p2Top+pH;
+  const ofiToY=v=>p2Top+pH-((v-ofiMin)/ofiRange)*pH;
 
-  // Highlight divergence zones
+  // Compressed gap markers (both panels)
+  for(const g of btm.gaps){
+    const gx1=tToX(g.s),gx2=tToX(g.e);
+    ctx.fillStyle=tc.gap;
+    ctx.fillRect(gx1,p1Top,gx2-gx1,pH);
+    ctx.fillRect(gx1,p2Top,gx2-gx1,pH);
+    // Diagonal hatching
+    for(const pTop of[p1Top,p2Top]){
+      ctx.save();ctx.beginPath();ctx.rect(gx1,pTop,gx2-gx1,pH);ctx.clip();
+      ctx.strokeStyle=tc.gap2;ctx.lineWidth=1*dpr;
+      for(let j=-pH;j<(gx2-gx1)+pH;j+=6*dpr){ctx.beginPath();ctx.moveTo(gx1+j,pTop);ctx.lineTo(gx1+j-pH,pTop+pH);ctx.stroke()}
+      ctx.restore();
+    }
+  }
+
+  // Divergence highlight zones (both panels, skip gaps)
   const blockSize=30000;
   for(let t=tMin;t<tMax;t+=blockSize){
+    if(btm.inGap(t))continue;
     const pr=prData.find(p=>p.t>=t&&p.t<t+blockSize);
     const pr0=prData.find(p=>p.t>=t-blockSize*4&&p.t<t);
     const ofi=ofiData.find(p=>p.t>=t&&p.t<t+blockSize);
@@ -784,11 +832,20 @@ function drawDivChart(canvas,sym){
     const isDivergent=(pDelta<0&&ofi.v>0)||(pDelta>0&&ofi.v<0);
     if(isDivergent){
       const x1=tToX(t),x2=tToX(t+blockSize);
-      ctx.fillStyle=ofi.v>0?tc.fillUp:tc.fillDn;
-      ctx.fillRect(x1,MT,x2-x1,cH);
+      const fc=ofi.v>0?tc.fillUp:tc.fillDn;
+      ctx.fillStyle=fc;
+      ctx.fillRect(x1,p1Top,x2-x1,pH);
+      ctx.fillRect(x1,p2Top,x2-x1,pH);
     }
   }
 
+  // ── Panel 1: Price % ──
+  // Zero line
+  if(prMin<0&&prMax>0){
+    const zy=prToY(0);
+    ctx.beginPath();ctx.strokeStyle=tc.grid;ctx.setLineDash([3*dpr,3*dpr]);
+    ctx.moveTo(ML,zy);ctx.lineTo(W-MR,zy);ctx.stroke();ctx.setLineDash([]);
+  }
   // Price line
   ctx.beginPath();ctx.strokeStyle=tc.cyan;ctx.lineWidth=1.5*dpr;
   for(let i=0;i<prData.length;i++){
@@ -796,27 +853,47 @@ function drawDivChart(canvas,sym){
     i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   }
   ctx.stroke();
+  // Panel 1 label
+  ctx.fillStyle=tc.cyan;ctx.font='600 '+(8*dpr)+'px "JetBrains Mono"';
+  ctx.textAlign='left';ctx.fillText('GIÁ %',ML+4*dpr,p1Top+10*dpr);
 
-  // OFI line
-  ctx.beginPath();ctx.strokeStyle=tc.yellow;ctx.lineWidth=1.5*dpr;ctx.setLineDash([4*dpr,3*dpr]);
+  // ── Separator ──
+  const sepY=MT+pH+GAP/2;
+  ctx.beginPath();ctx.strokeStyle=tc.grid2;ctx.lineWidth=1*dpr;
+  ctx.moveTo(ML,sepY);ctx.lineTo(W-MR,sepY);ctx.stroke();
+
+  // ── Panel 2: OFI ──
+  // Zero line
+  if(ofiMin<0&&ofiMax>0){
+    const zy=ofiToY(0);
+    ctx.beginPath();ctx.strokeStyle=tc.grid;ctx.setLineDash([3*dpr,3*dpr]);
+    ctx.moveTo(ML,zy);ctx.lineTo(W-MR,zy);ctx.stroke();ctx.setLineDash([]);
+  }
+  // OFI line (solid, not dashed)
+  ctx.beginPath();ctx.strokeStyle=tc.yellow;ctx.lineWidth=1.5*dpr;
   for(let i=0;i<ofiData.length;i++){
     const x=tToX(ofiData[i].t),y=ofiToY(ofiData[i].v);
     i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   }
-  ctx.stroke();ctx.setLineDash([]);
+  ctx.stroke();
+  // Panel 2 label
+  ctx.fillStyle=tc.yellow;ctx.font='600 '+(8*dpr)+'px "JetBrains Mono"';
+  ctx.textAlign='left';ctx.fillText('OFI',ML+4*dpr,p2Top+10*dpr);
 
-  // Time labels
+  // ── Shared time axis (below panel 2) ──
   ctx.fillStyle=tc.text;ctx.font=(9*dpr)+'px "JetBrains Mono"';
-  ctx.textAlign='left';ctx.fillText(timeStr(tMin),ML,H-2*dpr);
-  ctx.textAlign='right';ctx.fillText(timeStr(tMax),W-MR,H-2*dpr);
-
+  // Time grid lines span both panels
   const firstDate=new Date(tMin);
   let tickTime=new Date(firstDate);tickTime.setMinutes(Math.ceil(tickTime.getMinutes()/30)*30,0,0);
   for(let t=tickTime.getTime();t<=tMax;t+=30*60*1000){
-    if(t<tMin)continue;const x=tToX(t);if(x<ML+20*dpr||x>W-MR-20*dpr)continue;
-    ctx.beginPath();ctx.strokeStyle=tc.grid2;ctx.lineWidth=1*dpr;ctx.moveTo(x,MT);ctx.lineTo(x,MT+cH);ctx.stroke();
+    if(t<tMin||btm.inGap(t))continue;const x=tToX(t);if(x<ML+20*dpr||x>W-MR-20*dpr)continue;
+    ctx.beginPath();ctx.strokeStyle=tc.grid2;ctx.lineWidth=1*dpr;
+    ctx.moveTo(x,p1Top);ctx.lineTo(x,p1Bot);ctx.stroke();
+    ctx.moveTo(x,p2Top);ctx.lineTo(x,p2Bot);ctx.stroke();
     ctx.textAlign='center';ctx.fillText(timeStr(t),x,H-2*dpr);
   }
+  ctx.textAlign='left';ctx.fillText(timeStr(tMin),ML,H-2*dpr);
+  ctx.textAlign='right';ctx.fillText(timeStr(tMax),W-MR,H-2*dpr);
 }
 
 // ═══ COMPOUND SIGNAL ═══
@@ -973,14 +1050,14 @@ function renderHeatmap(){
   document.getElementById('topUp').innerHTML=topUp.map(m=>mk(m)).join('');document.getElementById('topDown').innerHTML=topDown.map(m=>mk(m)).join('');document.getElementById('topVol').innerHTML=topVol.map(m=>mk(m,1)).join('');
 }
 
-function toggleScanMode(){S.scanWide=!S.scanWide;document.getElementById('scanToggle').textContent=S.scanWide?'Thu gọn':'Mở rộng';document.getElementById('p-orderbook').style.setProperty('--scan-w',S.scanWide?'380px':'280px');renderScanner()}
+function toggleScanMode(){S.scanWide=!S.scanWide;document.getElementById('scanToggle').textContent=S.scanWide?'Thu gọn':'Mở rộng';document.getElementById('p-orderbook').style.setProperty('--scan-w',S.scanWide?'420px':'280px');renderScanner()}
 
 function renderScanner(){
   const w=S.scanWide,cls=w?'wide':'compact';
-  const arr=S.symbols.map(sym=>{const s=S.stk[sym]||{};return{sym,pct:s.pct||0,bs:sBs(s),ofi:ofiNorm(O.get(sym,'m'),sym),ff:sFfPct(s),pos:sPos(s),vol:s.vol||0}});
-  arr.sort((a,b)=>{let va,vb;switch(S.sortK){case'sym':return S.sortA?a.sym.localeCompare(b.sym):b.sym.localeCompare(a.sym);case'pct':va=a.pct;vb=b.pct;break;case'bs':va=a.bs;vb=b.bs;break;case'ofi':va=a.ofi;vb=b.ofi;break;case'ff':va=a.ff;vb=b.ff;break;default:va=a.pct;vb=b.pct}return S.sortA?va-vb:vb-va});
+  const arr=S.symbols.map(sym=>{const s=S.stk[sym]||{};return{sym,pct:s.pct||0,bs:sBs(s),ofi:ofiNorm(O.get(sym,'m'),sym),ff:sFfPct(s),pos:sPos(s),vol:s.vol||0,cd:cdNorm(sym)}});
+  arr.sort((a,b)=>{let va,vb;switch(S.sortK){case'sym':return S.sortA?a.sym.localeCompare(b.sym):b.sym.localeCompare(a.sym);case'pct':va=a.pct;vb=b.pct;break;case'bs':va=a.bs;vb=b.bs;break;case'ofi':va=a.ofi;vb=b.ofi;break;case'cd':va=a.cd;vb=b.cd;break;case'ff':va=a.ff;vb=b.ff;break;default:va=a.pct;vb=b.pct}return S.sortA?va-vb:vb-va});
   let hh='';
-  if(w)hh='<div data-sort="sym">Mã</div><div data-sort="pct" class="text-r'+(S.sortK==='pct'?' sa':'')+'">%</div><div data-sort="bs" class="text-r'+(S.sortK==='bs'?' sa':'')+'">B/S</div><div data-sort="ofi"'+(S.sortK==='ofi'?' class="sa"':'')+'>KLGD</div><div>OFI</div><div class="text-c">★</div>';
+  if(w)hh='<div data-sort="sym">Mã</div><div data-sort="pct" class="text-r'+(S.sortK==='pct'?' sa':'')+'">%</div><div data-sort="bs" class="text-r'+(S.sortK==='bs'?' sa':'')+'">B/S</div><div data-sort="ofi"'+(S.sortK==='ofi'?' class="sa"':'')+'>KLGD</div><div>OFI</div><div data-sort="cd"'+(S.sortK==='cd'?' class="sa"':'')+'>CVD</div><div class="text-c">★</div>';
   else hh='<div data-sort="sym">Mã</div><div data-sort="pct" class="text-r'+(S.sortK==='pct'?' sa':'')+'">%</div><div data-sort="bs" class="text-r'+(S.sortK==='bs'?' sa':'')+'">B/S</div><div data-sort="ofi"'+(S.sortK==='ofi'?' class="sa"':'')+'>OFI</div><div class="text-c">★</div>';
   document.getElementById('scanHead').className='scan-header '+cls;document.getElementById('scanHead').innerHTML=hh;
   let h='';
@@ -993,6 +1070,7 @@ function renderScanner(){
     h+='<div class="text-r '+(it.bs>55?'up-c':it.bs<45?'down-c':'ref-c')+'" style="font-size:11px">'+it.bs.toFixed(0)+'%</div>';
     if(w){h+='<div style="font-size:11px;color:var(--text2)">'+fmt(it.vol)+'</div>'}
     h+='<div title="OFI: '+(it.ofi>=0?'+':'')+it.ofi.toFixed(0)+'%">'+ofiBarHTML(it.ofi,8)+'</div>';
+    if(w){h+='<div title="CVD: '+(it.cd>=0?'+':'')+it.cd.toFixed(0)+'%">'+ofiBarHTML(it.cd,8)+'</div>'}
     h+='<div class="scan-pin'+(isPinned?' pinned':'')+'" data-pin="'+it.sym+'">'+(isPinned?'★':'☆')+'</div></div>'}
   document.getElementById('scanBody').innerHTML=h;
 }
@@ -1032,32 +1110,26 @@ function renderDetail(){
 
   h+='<div class="pos-bar-wrap" style="margin:8px 0"><div class="pos-bar-label"><span>'+fP(s.floor)+'</span><span>'+fP(s.ref)+'</span><span>'+fP(s.ceil)+'</span></div><div class="pos-bar"><div class="pos-needle" style="left:'+Math.max(0,Math.min(100,pos))+'%"></div></div></div>';
 
-  h+='<div style="margin-top:8px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Giá &amp; Thanh khoản</div></div>';
-  h+='<div class="detail-grid">';
-  h+='<div class="dstat"><div class="label">Spread</div><div class="val">'+fP(spread)+'</div></div>';
-  h+='<div class="dstat"><div class="label">Cao/Thấp</div><div class="val">'+fP(s.high)+'</div><div class="sub">'+fP(s.low)+'</div></div>';
-  h+='<div class="dstat"><div class="label">KLGD</div><div class="val">'+fmt(s.vol)+'</div><div class="sub">'+fmt(s.value)+'</div></div>';
-  h+='</div>';
+  // ── CHARTS FIRST (most important visual info) ──
 
-  h+='<div style="margin-top:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Dòng tiền</div></div>';
-  h+='<div class="detail-grid">';
-  h+='<div class="dstat"><div class="label">Bid/Ask</div><div class="val '+(ratio>1.3?'up-c':ratio<.77?'down-c':'ref-c')+'">'+ratio.toFixed(2)+'</div><div class="sub">'+fmt(tB)+' / '+fmt(tO)+'</div></div>';
-  h+='<div class="dstat"><div class="label">OFI</div><div class="val '+oLb.c+'">'+oLb.t+'</div>'+ofiBarHTML(ofiN,10)+'</div>';
-  h+='<div class="dstat"><div class="label">Mua/Bán</div><div class="val '+(bs>55?'up-c':bs<45?'down-c':'ref-c')+'">'+bs.toFixed(1)+'%</div><div class="sub">'+fmt(s.buyV)+' / '+fmt(s.sellV)+'</div></div>';
-  h+='</div>';
-
-  // Divergence chart: Price % vs OFI (dual line)
+  // Divergence chart: Price % vs OFI (stacked panels)
   if(S.sPrH[sym]&&S.sPrH[sym].length>3&&S.sOfiH[sym]&&S.sOfiH[sym].length>3){
-    h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Giá % vs OFI — '+sym+'</span><div class="div-chart-legend"><span style="color:var(--cyan)">— Giá %</span><span style="color:var(--yellow)">— OFI</span></div></div><canvas id="divChart" height="140" style="width:100%;border-radius:4px"></canvas></div>';
+    h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Giá % vs OFI — '+sym+'</span><div class="div-chart-legend"><span style="color:var(--cyan)">■ Giá %</span><span style="color:var(--yellow)">■ OFI</span><span style="color:var(--text3);font-style:italic;font-size:9px">vùng tô = phân kỳ</span></div></div><canvas id="divChart" height="180" style="width:100%;border-radius:4px"></canvas></div>';
   }
 
-  // Cumulative Delta + Real-time B/S Pressure
+  // Cumulative Delta chart + stats
   const cd=S.cumDelta[sym];
   if(cd){
     const cdTotal=cd.buyVol+cd.sellVol;
     const cdBuyPct=cdTotal>0?(cd.buyVol/cdTotal*100):50;
     const cdLbl=cd.running>=0?{t:'+'+fmt(cd.running),c:'up-c'}:{t:fmt(cd.running),c:'down-c'};
-    // Exhaustion: compare recent 30s sell volume vs peak
+
+    // Cumulative Delta sparkline (chart first)
+    if(cd.history.length>3){
+      h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Cumulative Delta — '+sym+'</span><span class="'+cdLbl.c+'" style="font-family:var(--mono);font-size:12px;font-weight:700">'+cdLbl.t+'</span></div><canvas id="cdChart" height="120" style="width:100%;border-radius:4px"></canvas></div>';
+    }
+
+    // Exhaustion
     const tr=S.trades[sym];
     let exhLbl={t:'—',c:'ref-c'};
     if(tr&&tr.recent.length>=5){
@@ -1074,19 +1146,37 @@ function renderDetail(){
         else exhLbl={t:'Bình thường',c:'ref-c'};
       }
     }
+
+    // Stats row
+    h+='<div style="margin-top:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Lệnh khớp chủ động <span style="text-transform:none;font-weight:400;letter-spacing:0;font-style:italic">(khác OFI — đo lệnh khớp thực, không phải sổ lệnh chờ)</span></div></div>';
+    const cdN=cdNorm(sym);
+    const cdNLbl=Math.abs(cdN)<10?{t:'Cân bằng',c:'ref-c'}:cdN>0?{t:'Mua '+cdN.toFixed(0)+'%',c:'up-c'}:{t:'Bán '+Math.abs(cdN).toFixed(0)+'%',c:'down-c'};
     h+='<div class="detail-grid" style="margin-top:8px">';
-    h+='<div class="dstat"><div class="label">Cum. Delta</div><div class="val '+cdLbl.c+'">'+cdLbl.t+'</div><div class="sub">B:'+fmt(cd.buyVol)+' S:'+fmt(cd.sellVol)+'</div></div>';
+    h+='<div class="dstat"><div class="label">Cumulative Delta</div><div class="val '+cdLbl.c+'">'+cdLbl.t+'</div><div class="sub">B:'+fmt(cd.buyVol)+' S:'+fmt(cd.sellVol)+'</div></div>';
     h+='<div class="dstat"><div class="label">B/S RT</div><div class="val '+(cdBuyPct>55?'up-c':cdBuyPct<45?'down-c':'ref-c')+'">'+cdBuyPct.toFixed(0)+'%</div>';
     h+='<div style="margin-top:4px"><div style="height:6px;border-radius:3px;background:var(--bg3);overflow:hidden"><div style="height:100%;width:'+cdBuyPct+'%;background:'+(cdBuyPct>55?'var(--green)':cdBuyPct<45?'var(--red)':'var(--text3)')+';border-radius:3px;transition:width .3s"></div></div></div></div>';
     h+='<div class="dstat"><div class="label">Exhaustion</div><div class="val '+exhLbl.c+'">'+exhLbl.t+'</div>'+(S.sideMode!=='auto'?'<div class="sub" style="color:var(--text3)">Side: '+S.sideMode+'</div>':'')+'</div>';
     h+='</div>';
-    // Cumulative Delta sparkline
-    if(cd.history.length>3){
-      h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Cum. Delta — '+sym+'</span><span class="'+cdLbl.c+'" style="font-family:var(--mono);font-size:12px;font-weight:700">'+cdLbl.t+'</span></div><canvas id="cdChart" height="120" style="width:100%;border-radius:4px"></canvas></div>';
-    }
   }
 
-  // Depth
+  // ── STATS (secondary info) ──
+
+  h+='<div style="margin-top:8px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Giá &amp; Thanh khoản</div></div>';
+  h+='<div class="detail-grid">';
+  h+='<div class="dstat"><div class="label">Spread</div><div class="val">'+fP(spread)+'</div></div>';
+  h+='<div class="dstat"><div class="label">Cao/Thấp</div><div class="val">'+fP(s.high)+'</div><div class="sub">'+fP(s.low)+'</div></div>';
+  h+='<div class="dstat"><div class="label">KLGD</div><div class="val">'+fmt(s.vol)+'</div><div class="sub">'+fmt(s.value)+'</div></div>';
+  h+='</div>';
+
+  h+='<div style="margin-top:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Dòng tiền</div></div>';
+  h+='<div class="detail-grid">';
+  h+='<div class="dstat"><div class="label">Bid/Ask</div><div class="val '+(ratio>1.3?'up-c':ratio<.77?'down-c':'ref-c')+'">'+ratio.toFixed(2)+'</div><div class="sub">'+fmt(tB)+' / '+fmt(tO)+'</div></div>';
+  h+='<div class="dstat"><div class="label">OFI</div><div class="val '+oLb.c+'">'+oLb.t+'</div>'+ofiBarHTML(ofiN,10)+'</div>';
+  h+='<div class="dstat"><div class="label">Mua/Bán</div><div class="val '+(bs>55?'up-c':bs<45?'down-c':'ref-c')+'">'+bs.toFixed(1)+'%</div><div class="sub">'+fmt(s.buyV)+' / '+fmt(s.sellV)+'</div></div>';
+  h+='</div>';
+
+  // ── DEPTH TABLE (last — requires scrolling) ──
+
   h+='<div style="margin-top:10px"><div class="depth-header"><div>KL Bid</div><div class="text-c">Giá</div><div>KL Ask</div></div>';
   if(bid.length||offer.length){
     const ml=Math.max(bid.length,offer.length),aQ=[...bid.map(l=>l.qty),...offer.map(l=>l.qty)];
@@ -1271,7 +1361,7 @@ const LS={
       if(d.pins)S.pins=d.pins;
       if(d.sortK)S.sortK=d.sortK;
       if(d.sortA!==undefined)S.sortA=d.sortA;
-      if(d.scanWide!==undefined){S.scanWide=d.scanWide;if(S.scanWide)document.getElementById('p-orderbook').style.setProperty('--scan-w','380px');document.getElementById('scanToggle').textContent=S.scanWide?'Thu gọn':'Mở rộng'}
+      if(d.scanWide!==undefined){S.scanWide=d.scanWide;if(S.scanWide)document.getElementById('p-orderbook').style.setProperty('--scan-w','420px');document.getElementById('scanToggle').textContent=S.scanWide?'Thu gọn':'Mở rộng'}
       if(d.pinnedCompact!==undefined){S.pinnedCompact=d.pinnedCompact;document.getElementById('pinnedToggle').textContent=S.pinnedCompact?'Chi tiết':'Thu gọn'}
       // Only restore OFI data if same day and < 8h old
       if(d.date===today&&d.savedAt&&Date.now()-d.savedAt<28800000){
