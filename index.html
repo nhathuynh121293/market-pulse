@@ -7,7 +7,14 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#080c14;--bg2:#0d1321;--bg3:#141c2e;--border:#1e2a45;--border2:#2a3a5c;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--green:#00e09e;--green2:#00c88a;--green-bg:rgba(0,224,158,.08);--red:#ff4d6a;--red2:#e8364f;--red-bg:rgba(255,77,106,.08);--yellow:#fbbf24;--yellow-bg:rgba(251,191,36,.08);--blue:#3b82f6;--blue-bg:rgba(59,130,246,.08);--cyan:#22d3ee;--ceil:#ff6b9d;--floor:#6366f1;--font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace}
+:root{--bg:#080c14;--bg2:#0d1321;--bg3:#141c2e;--border:#1e2a45;--border2:#2a3a5c;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--green:#00e09e;--green2:#00c88a;--green-bg:rgba(0,224,158,.08);--red:#ff4d6a;--red2:#e8364f;--red-bg:rgba(255,77,106,.08);--yellow:#fbbf24;--yellow-bg:rgba(251,191,36,.08);--blue:#3b82f6;--blue-bg:rgba(59,130,246,.08);--cyan:#22d3ee;--ceil:#ff6b9d;--floor:#6366f1;--font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+  --chart-green:#00e09e;--chart-red:#ff4d6a;--chart-cyan:#22d3ee;--chart-yellow:#fbbf24;--chart-fill-up:rgba(0,224,158,.08);--chart-fill-dn:rgba(255,77,106,.08);--chart-grid:rgba(100,116,139,.25);--chart-grid2:rgba(100,116,139,.15);--chart-text:rgba(100,116,139,.5);--chart-gap:rgba(100,116,139,.04);--chart-gap2:rgba(100,116,139,.08);
+  --depth-bid-bg:rgba(0,224,158,.15);--depth-ask-bg:rgba(255,77,106,.15);--depth-bid-hl:rgba(0,224,158,.06);--depth-ask-hl:rgba(255,77,106,.06);
+  --scroll-thumb:var(--border2)}
+[data-theme="light"]{--bg:#f5f0e8;--bg2:#ede7da;--bg3:#e4ddd0;--border:#d4cbbf;--border2:#c0b5a4;--text:#2c2418;--text2:#6b5d4d;--text3:#8f8174;--green:#0d9668;--green2:#0b7c56;--green-bg:rgba(13,150,104,.1);--red:#dc2626;--red2:#b91c1c;--red-bg:rgba(220,38,38,.08);--yellow:#b45309;--yellow-bg:rgba(180,83,9,.08);--blue:#2563eb;--blue-bg:rgba(37,99,235,.08);--cyan:#0e7490;--ceil:#be185d;--floor:#4338ca;
+  --chart-green:#0d9668;--chart-red:#dc2626;--chart-cyan:#0e7490;--chart-yellow:#b45309;--chart-fill-up:rgba(13,150,104,.12);--chart-fill-dn:rgba(220,38,38,.10);--chart-grid:rgba(100,90,75,.2);--chart-grid2:rgba(100,90,75,.12);--chart-text:rgba(100,90,75,.45);--chart-gap:rgba(100,90,75,.05);--chart-gap2:rgba(100,90,75,.08);
+  --depth-bid-bg:rgba(13,150,104,.15);--depth-ask-bg:rgba(220,38,38,.12);--depth-bid-hl:rgba(13,150,104,.08);--depth-ask-hl:rgba(220,38,38,.06);
+  --scroll-thumb:#c0b5a4}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;overflow-x:hidden}
 .header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
 .logo{font-family:var(--mono);font-weight:700;font-size:18px;letter-spacing:2px;background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
@@ -132,7 +139,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .scan-header.compact{grid-template-columns:46px 50px 40px 1fr 26px}
 .scan-header.wide{grid-template-columns:46px 50px 40px 50px 1fr 26px}
 .scan-header>div:hover{color:var(--cyan)}.scan-header .sa{color:var(--cyan)}
-.scan-row{display:grid;gap:4px;padding:5px 6px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:.1s;border-bottom:1px solid rgba(30,42,69,.3);align-items:center}
+.scan-row{display:grid;gap:4px;padding:5px 6px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:.1s;border-bottom:1px solid var(--border);align-items:center}
 .scan-row.compact{grid-template-columns:46px 50px 40px 1fr 26px}
 .scan-row.wide{grid-template-columns:46px 50px 40px 50px 1fr 26px}
 .scan-row:hover{background:var(--bg3)}.scan-row.active{background:var(--blue-bg)}
@@ -182,16 +189,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .pcard-compact .pc-metric{font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap}
 .pcard-compact .pc-ofi-bar{flex:1;min-width:40px;max-width:60px}
 .pcard-expanded{border-color:var(--cyan);background:rgba(34,211,238,.03)}
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:3px}
 .up-c{color:var(--green)!important}.down-c{color:var(--red)!important}.ref-c{color:var(--yellow)!important}.ceil-c{color:var(--ceil)!important}.floor-c{color:var(--floor)!important}
 .text-r{text-align:right}.text-c{text-align:center}
 .empty-msg{color:var(--text3);font-size:14px;text-align:center;padding:40px 16px;font-style:italic}
 @media(max-width:1100px){#p-overview{grid-template-columns:1fr}.gauge-wrap{grid-row:auto}#p-orderbook{grid-template-columns:220px 1fr}.pinned-panel{display:none}#p-heatmap{grid-template-columns:1fr}}
+[data-theme="light"] .alert-banner.bull{background:#e6f5ee;color:var(--green);border:1px solid rgba(13,150,104,.3)}
+[data-theme="light"] .alert-banner.bear{background:#fde8e8;color:var(--red);border:1px solid rgba(220,38,38,.3)}
+[data-theme="light"] .breadth-seg.up{color:#fff}[data-theme="light"] .breadth-seg.ref{color:#fff}[data-theme="light"] .breadth-seg.down{color:#fff}
+[data-theme="light"] .noti-item.unread{border-left-color:var(--cyan)}
+[data-theme="light"] .noti-drawer{box-shadow:0 8px 30px rgba(0,0,0,.15)}
+[data-theme="light"] .settings-panel{box-shadow:0 12px 40px rgba(0,0,0,.2)}
+[data-theme="light"] .logo{background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+[data-theme="light"] .conn-dot.ok{background:var(--green);box-shadow:0 0 8px rgba(13,150,104,.4)}
+[data-theme="light"] .pressure-fill.buy{color:#fff}
+[data-theme="light"] .settings-overlay{background:rgba(0,0,0,.3)}
+.theme-toggle{cursor:pointer;font-size:16px;color:var(--text3);padding:4px;transition:.2s;user-select:none}
+.theme-toggle:hover{color:var(--cyan)}
 </style>
 </head>
 <body>
 <div class="loading-overlay" id="loadingOverlay"><div class="logo" style="font-size:24px;margin-bottom:8px">MKT.PULSE</div><div id="loadingText" style="font-size:14px;color:var(--text3);font-family:var(--mono)">Đang tải dữ liệu phiên...</div><div class="loading-bar"><div class="loading-fill" id="loadingFill" style="width:0%"></div></div></div>
-<div class="header"><div class="logo">MKT.PULSE <span>HOSE · VN30</span></div><div class="hdr-right"><div class="sess-badge" id="sessBadge">--</div><div class="noti-wrap"><div class="noti-bell" id="notiBell" onclick="toggleNoti()">🔔<span class="noti-badge" id="notiBadge" style="display:none">0</span></div><div class="noti-drawer" id="notiDrawer"><div class="noti-header"><span>Thông báo</span><span class="noti-clear" onclick="clearNoti()">Xóa tất cả</span></div><div class="noti-list" id="notiList"><div class="noti-empty">Chưa có thông báo</div></div></div></div><div class="settings-icon" onclick="openSettings()">⚙</div><div class="conn"><div class="conn-dot" id="connDot"></div><span id="connText">--</span></div></div></div>
+<div class="header"><div class="logo">MKT.PULSE <span>HOSE · VN30</span></div><div class="hdr-right"><div class="sess-badge" id="sessBadge">--</div><div class="noti-wrap"><div class="noti-bell" id="notiBell" onclick="toggleNoti()">🔔<span class="noti-badge" id="notiBadge" style="display:none">0</span></div><div class="noti-drawer" id="notiDrawer"><div class="noti-header"><span>Thông báo</span><span class="noti-clear" onclick="clearNoti()">Xóa tất cả</span></div><div class="noti-list" id="notiList"><div class="noti-empty">Chưa có thông báo</div></div></div></div><div class="settings-icon" onclick="openSettings()">⚙</div><div class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀</div><div class="conn"><div class="conn-dot" id="connDot"></div><span id="connText">--</span></div></div></div>
 <div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
 <div class="settings-panel">
   <div class="settings-header"><span class="title">Cài đặt OFI</span><span class="settings-close" onclick="closeSettings()">✕</span></div>
@@ -219,6 +238,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="settings-section">
     <div class="settings-section-title">Normalize</div>
     <div class="setting-row"><div><div class="setting-label">OFI reference</div><div class="setting-sub">vol × factor (hiện: 0.01)</div></div><input class="setting-input" id="s_norm" type="number" step="0.001" min="0.001" max="1"></div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-section-title">Lệnh lớn (Large Trade)</div>
+    <div class="setting-row"><div><div class="setting-label">KL tối thiểu</div><div class="setting-sub">Bỏ qua lệnh nhỏ hơn giá trị này</div></div><input class="setting-input" id="s_ltmin" type="number" min="100" max="50000" step="100"></div>
+    <div class="setting-row"><div><div class="setting-label">Hệ số Large (×avg)</div><div class="setting-sub">Lệnh ≥ avg × N → ghi nhận</div></div><input class="setting-input" id="s_ltmulti" type="number" min="2" max="30" step="1"></div>
+    <div class="setting-row"><div><div class="setting-label">Hệ số Massive (×avg)</div><div class="setting-sub">Lệnh ≥ avg × N → push thông báo</div></div><input class="setting-input" id="s_ltmassive" type="number" min="5" max="50" step="1"></div>
+    <div class="setting-row"><div><div class="setting-label">Cooldown (giây)</div><div class="setting-sub">Tạm ngưng alert cùng mã sau N giây</div></div><input class="setting-input" id="s_ltcool" type="number" min="30" max="600" step="10"></div>
   </div>
   <div class="settings-note">Thay đổi EMA half-life cần ~2× half-life mới ổn định. Trong thời gian chuyển tiếp, OFI blend giữa cũ và mới.</div>
   </div>
@@ -295,7 +321,7 @@ const C={proxy:'https://ssi-proxy.nhathuynhueh.workers.dev/stock/group/VN30',pol
   LT_MULTI:5, // multiplier vs avg for "large"
   LT_MASSIVE:15, // multiplier vs avg for "massive" (push alert)
   LT_AGG_WIN:30, // seconds to aggregate same-side large trades
-  LT_MIN_QTY:3000, // absolute minimum qty to consider "large"
+  LT_MIN_QTY:5000, // absolute minimum qty to consider "large"
 };
 const SESS={'ATO':'ATO','LO':'Liên tục','ATC':'ATC','CLOSE':'Đã đóng','C':'Đã đóng','PCA':'Sau giờ','O':'Chưa mở','P':'Tạm ngưng','PT':'Thỏa thuận','PTR':'Thỏa thuận'};
 
@@ -322,6 +348,41 @@ const S={symbols:[],stk:{},sel:null,pins:[],sortK:'pct',sortA:false,dok:false,wo
 
 // ═══ HELPERS ═══
 const fmt=n=>{if(n==null||isNaN(n))return'-';const a=Math.abs(n);if(a>=1e12)return(n/1e12).toFixed(1)+'T';if(a>=1e9)return(n/1e9).toFixed(1)+'B';if(a>=1e6)return(n/1e6).toFixed(1)+'M';if(a>=1e3)return(n/1e3).toFixed(1)+'K';return n.toLocaleString('vi-VN')};
+
+// ═══ THEME ═══
+function isLightTheme(){return document.documentElement.getAttribute('data-theme')==='light'}
+function toggleTheme(){
+  const goLight=!isLightTheme();
+  if(goLight)document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  document.getElementById('themeToggle').textContent=goLight?'☾':'☀';
+  try{localStorage.setItem('mktpulse_theme',goLight?'light':'dark')}catch{}
+}
+function loadTheme(){
+  try{
+    const t=localStorage.getItem('mktpulse_theme');
+    if(t==='light'){
+      document.documentElement.setAttribute('data-theme','light');
+      document.getElementById('themeToggle').textContent='☾';
+    }
+  }catch{}
+}
+function chartColors(){
+  const s=getComputedStyle(document.documentElement);
+  return{
+    green:s.getPropertyValue('--chart-green').trim(),
+    red:s.getPropertyValue('--chart-red').trim(),
+    cyan:s.getPropertyValue('--chart-cyan').trim(),
+    yellow:s.getPropertyValue('--chart-yellow').trim(),
+    fillUp:s.getPropertyValue('--chart-fill-up').trim(),
+    fillDn:s.getPropertyValue('--chart-fill-dn').trim(),
+    grid:s.getPropertyValue('--chart-grid').trim(),
+    grid2:s.getPropertyValue('--chart-grid2').trim(),
+    text:s.getPropertyValue('--chart-text').trim(),
+    gap:s.getPropertyValue('--chart-gap').trim(),
+    gap2:s.getPropertyValue('--chart-gap2').trim(),
+  };
+}
 const fP=p=>p?p.toLocaleString('vi-VN'):'—';
 const pC=v=>v>0.01?'up-c':v<-0.01?'down-c':'ref-c';
 const prC=(p,s)=>{if(!s||!p)return'';if(s.ceil&&p>=s.ceil)return'ceil-c';if(s.floor&&p<=s.floor)return'floor-c';if(s.ref&&p>s.ref)return'up-c';if(s.ref&&p<s.ref)return'down-c';return'ref-c'};
@@ -579,6 +640,7 @@ function drawOfiChart(canvas,dataArr,label){
     const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
     return;
   }
+  const tc=chartColors();
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
   const W=canvas.width=canvas.offsetWidth*dpr;
@@ -605,12 +667,12 @@ function drawOfiChart(canvas,dataArr,label){
   // Zero line
   if(vMin<0&&vMax>0){
     const zy=vToY(0);
-    ctx.beginPath();ctx.strokeStyle='rgba(100,116,139,.25)';ctx.setLineDash([4*dpr,4*dpr]);
+    ctx.beginPath();ctx.strokeStyle=tc.grid;ctx.setLineDash([4*dpr,4*dpr]);
     ctx.moveTo(ML,zy);ctx.lineTo(W-MR,zy);ctx.stroke();ctx.setLineDash([]);
   }
 
   // Find segments (split at gaps > 60s)
-  const GAP_THRESH=180000; // 3 min - only show gap for real disconnects
+  const GAP_THRESH=180000;
   const segments=[];
   let seg=[];
   for(let i=0;i<dataArr.length;i++){
@@ -619,14 +681,12 @@ function drawOfiChart(canvas,dataArr,label){
       const prevT=seg[seg.length-1].t||seg[seg.length-1].time;
       if(t-prevT>GAP_THRESH){
         segments.push(seg);
-        // Mark gap region
         const gapStart=prevT, gapEnd=t;
         const gx1=tToX(gapStart),gx2=tToX(gapEnd);
-        ctx.fillStyle='rgba(100,116,139,.04)';
+        ctx.fillStyle=tc.gap;
         ctx.fillRect(gx1,MT,gx2-gx1,cH);
-        // Diagonal stripes in gap
         ctx.save();ctx.beginPath();ctx.rect(gx1,MT,gx2-gx1,cH);ctx.clip();
-        ctx.strokeStyle='rgba(100,116,139,.08)';ctx.lineWidth=1*dpr;
+        ctx.strokeStyle=tc.gap2;ctx.lineWidth=1*dpr;
         for(let j=-cH;j<(gx2-gx1)+cH;j+=8*dpr){ctx.beginPath();ctx.moveTo(gx1+j,MT);ctx.lineTo(gx1+j-cH,MT+cH);ctx.stroke()}
         ctx.restore();
         seg=[];
@@ -639,34 +699,30 @@ function drawOfiChart(canvas,dataArr,label){
   // Draw each segment
   for(const pts of segments){
     if(pts.length<2)continue;
-    // Green area (above zero)
     const zy=vToY(0);
     ctx.beginPath();
     ctx.moveTo(tToX(pts[0].t||pts[0].time),zy);
     for(const p of pts){const x=tToX(p.t||p.time),y=vToY(p.v);ctx.lineTo(x,Math.min(y,zy))}
     ctx.lineTo(tToX(pts[pts.length-1].t||pts[pts.length-1].time),zy);ctx.closePath();
-    ctx.fillStyle='rgba(0,224,158,.08)';ctx.fill();
+    ctx.fillStyle=tc.fillUp;ctx.fill();
 
-    // Red area (below zero)
     ctx.beginPath();
     ctx.moveTo(tToX(pts[0].t||pts[0].time),zy);
     for(const p of pts){const x=tToX(p.t||p.time),y=vToY(p.v);ctx.lineTo(x,Math.max(y,zy))}
     ctx.lineTo(tToX(pts[pts.length-1].t||pts[pts.length-1].time),zy);ctx.closePath();
-    ctx.fillStyle='rgba(255,77,106,.08)';ctx.fill();
+    ctx.fillStyle=tc.fillDn;ctx.fill();
 
-    // Line
     ctx.beginPath();ctx.lineWidth=1.5*dpr;
     for(let i=0;i<pts.length;i++){const x=tToX(pts[i].t||pts[i].time),y=vToY(pts[i].v);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
     const lastV=pts[pts.length-1].v;
-    ctx.strokeStyle=lastV>=0?'#00e09e':'#ff4d6a';ctx.stroke();
+    ctx.strokeStyle=lastV>=0?tc.green:tc.red;ctx.stroke();
   }
 
   // Time axis labels
-  ctx.fillStyle='rgba(100,116,139,.5)';
+  ctx.fillStyle=tc.text;
   ctx.font=(9*dpr)+'px "JetBrains Mono"';
   ctx.textAlign='center';
 
-  // Generate tick marks every 30 min within data range
   const firstDate=new Date(tMin);
   let tickTime=new Date(firstDate);
   tickTime.setMinutes(Math.ceil(tickTime.getMinutes()/30)*30,0,0);
@@ -676,15 +732,12 @@ function drawOfiChart(canvas,dataArr,label){
     if(t<tMin)continue;
     const x=tToX(t);
     if(x<ML+20*dpr||x>W-MR-20*dpr)continue;
-    // Tick line
-    ctx.beginPath();ctx.strokeStyle='rgba(100,116,139,.15)';ctx.lineWidth=1*dpr;
+    ctx.beginPath();ctx.strokeStyle=tc.grid2;ctx.lineWidth=1*dpr;
     ctx.moveTo(x,MT);ctx.lineTo(x,MT+cH);ctx.stroke();
-    // Label
     const d=new Date(t);
     ctx.fillText(d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'),x,H-2*dpr);
   }
 
-  // First and last time labels
   ctx.textAlign='left';
   ctx.fillText(timeStr(tMin),ML,H-2*dpr);
   ctx.textAlign='right';
@@ -695,6 +748,7 @@ function drawOfiChart(canvas,dataArr,label){
 function drawDivChart(canvas,sym){
   const prData=S.sPrH[sym],ofiData=S.sOfiH[sym];
   if(!prData||prData.length<3||!ofiData||ofiData.length<3)return;
+  const tc=chartColors();
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
   const W=canvas.width=canvas.offsetWidth*dpr;
@@ -703,29 +757,24 @@ function drawDivChart(canvas,sym){
   const ML=5*dpr,MR=5*dpr,MT=5*dpr,MB=16*dpr;
   const cW=W-ML-MR,cH=H-MT-MB;
 
-  // Align time ranges
   const tMin=Math.min(prData[0].t,ofiData[0].t);
   const tMax=Math.max(prData[prData.length-1].t,ofiData[ofiData.length-1].t);
   const tRange=Math.max(tMax-tMin,1000);
   const tToX=t=>ML+((t-tMin)/tRange)*cW;
 
-  // Price: normalize to -100..+100 range relative to its own min/max
   const prVals=prData.map(p=>p.pct);
   const prMin=Math.min(...prVals),prMax=Math.max(...prVals);
   const prRange=Math.max(prMax-prMin,0.01);
   const prToY=v=>MT+cH-((v-prMin)/prRange)*cH;
 
-  // OFI: already normalized -100..+100
   const ofiVals=ofiData.map(p=>p.v);
   const ofiMin=Math.min(...ofiVals),ofiMax=Math.max(...ofiVals);
   const ofiRange=Math.max(ofiMax-ofiMin,1);
   const ofiToY=v=>MT+cH-((v-ofiMin)/ofiRange)*cH;
 
-  // Highlight divergence zones (price down + ofi up, or price up + ofi down)
-  // Use blocks of 30s
+  // Highlight divergence zones
   const blockSize=30000;
   for(let t=tMin;t<tMax;t+=blockSize){
-    // Find nearest price and ofi values at this time
     const pr=prData.find(p=>p.t>=t&&p.t<t+blockSize);
     const pr0=prData.find(p=>p.t>=t-blockSize*4&&p.t<t);
     const ofi=ofiData.find(p=>p.t>=t&&p.t<t+blockSize);
@@ -735,21 +784,21 @@ function drawDivChart(canvas,sym){
     const isDivergent=(pDelta<0&&ofi.v>0)||(pDelta>0&&ofi.v<0);
     if(isDivergent){
       const x1=tToX(t),x2=tToX(t+blockSize);
-      ctx.fillStyle=ofi.v>0?'rgba(0,224,158,.06)':'rgba(255,77,106,.06)';
+      ctx.fillStyle=ofi.v>0?tc.fillUp:tc.fillDn;
       ctx.fillRect(x1,MT,x2-x1,cH);
     }
   }
 
-  // Draw price line (cyan)
-  ctx.beginPath();ctx.strokeStyle='#22d3ee';ctx.lineWidth=1.5*dpr;
+  // Price line
+  ctx.beginPath();ctx.strokeStyle=tc.cyan;ctx.lineWidth=1.5*dpr;
   for(let i=0;i<prData.length;i++){
     const x=tToX(prData[i].t),y=prToY(prData[i].pct);
     i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   }
   ctx.stroke();
 
-  // Draw OFI line (yellow)
-  ctx.beginPath();ctx.strokeStyle='#fbbf24';ctx.lineWidth=1.5*dpr;ctx.setLineDash([4*dpr,3*dpr]);
+  // OFI line
+  ctx.beginPath();ctx.strokeStyle=tc.yellow;ctx.lineWidth=1.5*dpr;ctx.setLineDash([4*dpr,3*dpr]);
   for(let i=0;i<ofiData.length;i++){
     const x=tToX(ofiData[i].t),y=ofiToY(ofiData[i].v);
     i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
@@ -757,16 +806,15 @@ function drawDivChart(canvas,sym){
   ctx.stroke();ctx.setLineDash([]);
 
   // Time labels
-  ctx.fillStyle='rgba(100,116,139,.5)';ctx.font=(9*dpr)+'px "JetBrains Mono"';
+  ctx.fillStyle=tc.text;ctx.font=(9*dpr)+'px "JetBrains Mono"';
   ctx.textAlign='left';ctx.fillText(timeStr(tMin),ML,H-2*dpr);
   ctx.textAlign='right';ctx.fillText(timeStr(tMax),W-MR,H-2*dpr);
 
-  // 30min ticks
   const firstDate=new Date(tMin);
   let tickTime=new Date(firstDate);tickTime.setMinutes(Math.ceil(tickTime.getMinutes()/30)*30,0,0);
   for(let t=tickTime.getTime();t<=tMax;t+=30*60*1000){
     if(t<tMin)continue;const x=tToX(t);if(x<ML+20*dpr||x>W-MR-20*dpr)continue;
-    ctx.beginPath();ctx.strokeStyle='rgba(100,116,139,.1)';ctx.lineWidth=1*dpr;ctx.moveTo(x,MT);ctx.lineTo(x,MT+cH);ctx.stroke();
+    ctx.beginPath();ctx.strokeStyle=tc.grid2;ctx.lineWidth=1*dpr;ctx.moveTo(x,MT);ctx.lineTo(x,MT+cH);ctx.stroke();
     ctx.textAlign='center';ctx.fillText(timeStr(t),x,H-2*dpr);
   }
 }
@@ -1044,14 +1092,14 @@ function renderDetail(){
     const ml=Math.max(bid.length,offer.length),aQ=[...bid.map(l=>l.qty),...offer.map(l=>l.qty)];
     const mq=Math.max(1,...aQ),avgQ=aQ.reduce((a,b)=>a+b,0)/(aQ.length||1),lT=avgQ*2;
     for(let i=0;i<ml;i++){const bi=bid[i],ak=offer[i],biL=bi&&bi.qty>lT,akL=ak&&ak.qty>lT;
-      h+='<div class="depth-grid"><div style="text-align:right;position:relative;height:32px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px'+(biL?';background:rgba(0,224,158,.06)':'')+'">';
-      if(bi)h+='<div style="position:absolute;right:0;top:0;bottom:0;width:'+bi.qty/mq*100+'%;background:rgba(0,224,158,.15);border-radius:3px"></div><span style="position:relative;font-family:var(--mono);font-size:13px;color:var(--text2)">'+fmt(bi.qty)+(biL?' ●':'')+'</span>';
+      h+='<div class="depth-grid"><div style="text-align:right;position:relative;height:32px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px'+(biL?';background:var(--depth-bid-hl)':'')+'">';
+      if(bi)h+='<div style="position:absolute;right:0;top:0;bottom:0;width:'+bi.qty/mq*100+'%;background:var(--depth-bid-bg);border-radius:3px"></div><span style="position:relative;font-family:var(--mono);font-size:13px;color:var(--text2)">'+fmt(bi.qty)+(biL?' ●':'')+'</span>';
       h+='</div><div style="display:flex;align-items:center;justify-content:center;gap:8px;height:32px">';
       if(bi)h+='<span style="font-family:var(--mono);font-size:13px;font-weight:600" class="'+prC(bi.price,s)+'">'+fP(bi.price)+'</span>';else h+='<span style="width:40px"></span>';
       h+='<span style="color:var(--text3);font-size:10px">│</span>';
       if(ak)h+='<span style="font-family:var(--mono);font-size:13px;font-weight:600" class="'+prC(ak.price,s)+'">'+fP(ak.price)+'</span>';else h+='<span style="width:40px"></span>';
-      h+='</div><div style="text-align:left;position:relative;height:32px;display:flex;align-items:center;padding-left:6px'+(akL?';background:rgba(255,77,106,.06)':'')+'">';
-      if(ak)h+='<div style="position:absolute;left:0;top:0;bottom:0;width:'+ak.qty/mq*100+'%;background:rgba(255,77,106,.15);border-radius:3px"></div><span style="position:relative;font-family:var(--mono);font-size:13px;color:var(--text2)">'+fmt(ak.qty)+(akL?' ●':'')+'</span>';
+      h+='</div><div style="text-align:left;position:relative;height:32px;display:flex;align-items:center;padding-left:6px'+(akL?';background:var(--depth-ask-hl)':'')+'">';
+      if(ak)h+='<div style="position:absolute;left:0;top:0;bottom:0;width:'+ak.qty/mq*100+'%;background:var(--depth-ask-bg);border-radius:3px"></div><span style="position:relative;font-family:var(--mono);font-size:13px;color:var(--text2)">'+fmt(ak.qty)+(akL?' ●':'')+'</span>';
       h+='</div></div>'}
     h+='<div class="depth-grid" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><div style="text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--green)">'+fmt(tB)+'</div><div style="text-align:center;font-size:10px;color:var(--text3)">Tổng</div><div style="text-align:left;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--red)">'+fmt(tO)+'</div></div>';
   }else h+='<div class="empty-msg">Chưa có sổ lệnh</div>';
@@ -1121,7 +1169,7 @@ document.getElementById('pinnedContent').addEventListener('click',e=>{
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));t.classList.add('active');document.getElementById('p-'+t.dataset.tab).classList.add('active')}));
 
 // ═══ SETTINGS ═══
-const DEFAULTS={HL_F:60,HL_M:300,HL_S:900,W1:1.0,W2:0.5,W3:0.25,DIV_LB:420,DIV_PT:0.15,DIV_OT:25,DIV_PERSIST:5,DIV_ADAPTIVE:1,NORM_F:0.01};
+const DEFAULTS={HL_F:60,HL_M:300,HL_S:900,W1:1.0,W2:0.5,W3:0.25,DIV_LB:420,DIV_PT:0.15,DIV_OT:25,DIV_PERSIST:5,DIV_ADAPTIVE:1,NORM_F:0.01,LT_MIN_QTY:5000,LT_MULTI:5,LT_MASSIVE:15,LT_COOLDOWN:180};
 
 function openSettings(){
   document.getElementById('s_hlf').value=C.HL_F;
@@ -1136,6 +1184,10 @@ function openSettings(){
   document.getElementById('s_divper').value=C.DIV_PERSIST;
   document.getElementById('s_divadp').value=C.DIV_ADAPTIVE;
   document.getElementById('s_norm').value=C.NORM_F;
+  document.getElementById('s_ltmin').value=C.LT_MIN_QTY;
+  document.getElementById('s_ltmulti').value=C.LT_MULTI;
+  document.getElementById('s_ltmassive').value=C.LT_MASSIVE;
+  document.getElementById('s_ltcool').value=C.LT_COOLDOWN;
   document.getElementById('settingsOverlay').classList.add('open');
 }
 
@@ -1156,11 +1208,17 @@ function applySettings(){
   C.DIV_PERSIST=parseInt(document.getElementById('s_divper').value)||DEFAULTS.DIV_PERSIST;
   C.DIV_ADAPTIVE=parseInt(document.getElementById('s_divadp').value);
   C.NORM_F=parseFloat(document.getElementById('s_norm').value)||DEFAULTS.NORM_F;
+  C.LT_MIN_QTY=parseInt(document.getElementById('s_ltmin').value)||DEFAULTS.LT_MIN_QTY;
+  C.LT_MULTI=parseInt(document.getElementById('s_ltmulti').value)||DEFAULTS.LT_MULTI;
+  C.LT_MASSIVE=parseInt(document.getElementById('s_ltmassive').value)||DEFAULTS.LT_MASSIVE;
+  C.LT_COOLDOWN=parseInt(document.getElementById('s_ltcool').value)||DEFAULTS.LT_COOLDOWN;
   // Save settings to localStorage
-  try{localStorage.setItem('mktpulse_settings',JSON.stringify({HL_F:C.HL_F,HL_M:C.HL_M,HL_S:C.HL_S,W1:C.W1,W2:C.W2,W3:C.W3,DIV_LB:C.DIV_LB,DIV_PT:C.DIV_PT,DIV_OT:C.DIV_OT,DIV_PERSIST:C.DIV_PERSIST,DIV_ADAPTIVE:C.DIV_ADAPTIVE,NORM_F:C.NORM_F}))}catch{}
+  try{localStorage.setItem('mktpulse_settings',JSON.stringify({HL_F:C.HL_F,HL_M:C.HL_M,HL_S:C.HL_S,W1:C.W1,W2:C.W2,W3:C.W3,DIV_LB:C.DIV_LB,DIV_PT:C.DIV_PT,DIV_OT:C.DIV_OT,DIV_PERSIST:C.DIV_PERSIST,DIV_ADAPTIVE:C.DIV_ADAPTIVE,NORM_F:C.NORM_F,LT_MIN_QTY:C.LT_MIN_QTY,LT_MULTI:C.LT_MULTI,LT_MASSIVE:C.LT_MASSIVE,LT_COOLDOWN:C.LT_COOLDOWN}))}catch{}
   closeSettings();
   S.divStreak={}; // Reset streaks on settings change
-  addNoti('Cài đặt OFI đã cập nhật','bull',null);
+  S.lastLargeTrade={}; // Reset large trade cooldowns
+  S.largeBuf={}; // Clear pending buffers
+  addNoti('Cài đặt đã cập nhật','bull',null);
 }
 
 function resetSettings(){
@@ -1179,6 +1237,10 @@ function loadSettings(){
     if(d.DIV_LB)C.DIV_LB=d.DIV_LB;if(d.DIV_PT)C.DIV_PT=d.DIV_PT;if(d.DIV_OT)C.DIV_OT=d.DIV_OT;
     if(d.DIV_PERSIST)C.DIV_PERSIST=d.DIV_PERSIST;if(d.DIV_ADAPTIVE!=null)C.DIV_ADAPTIVE=d.DIV_ADAPTIVE;
     if(d.NORM_F)C.NORM_F=d.NORM_F;
+    if(d.LT_MIN_QTY)C.LT_MIN_QTY=d.LT_MIN_QTY;
+    if(d.LT_MULTI)C.LT_MULTI=d.LT_MULTI;
+    if(d.LT_MASSIVE)C.LT_MASSIVE=d.LT_MASSIVE;
+    if(d.LT_COOLDOWN)C.LT_COOLDOWN=d.LT_COOLDOWN;
     console.log('[Settings] Loaded custom OFI params');
   }catch{}
 }
@@ -1231,6 +1293,7 @@ const LS={
 function render(){O.snap();checkAlert();const at=document.querySelector('.tab.active').dataset.tab;if(at==='overview')renderOverview();else if(at==='heatmap')renderHeatmap();else if(at==='orderbook'){renderScanner();renderDetail();renderPinned()}}
 async function init(){
   setTimeout(hideLoading,20000);
+  loadTheme(); // Restore theme preference
   loadSettings(); // Restore custom OFI params
   LS.load(); // Restore saved state
   setLoading(20,'Tải dữ liệu VN30...');
