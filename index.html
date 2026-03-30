@@ -37,6 +37,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .noti-time{font-family:var(--mono);font-size:10px;color:var(--text3)}
 .noti-msg{margin-top:2px;font-family:var(--mono);font-weight:600}
 .noti-empty{padding:30px;text-align:center;font-size:12px;color:var(--text3);font-style:italic}
+.noti-dim{opacity:.55}
 /* DIVERGENCE CHART */
 .div-chart-wrap{background:var(--bg);border-radius:8px;padding:10px 12px;margin:10px 0}
 .div-chart-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
@@ -138,6 +139,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .scan-sym{font-weight:700;font-size:13px}
 .scan-row.div-bull{border-left:3px solid var(--green)}.scan-row.div-bear{border-left:3px solid var(--red)}
 .pcard.div-bull{border-left:3px solid var(--green)}.pcard.div-bear{border-left:3px solid var(--red)}
+.pcard-compact.div-bull{border-left:3px solid var(--green)}.pcard-compact.div-bear{border-left:3px solid var(--red)}
 .div-tag{font-size:10px;font-weight:700;font-family:var(--mono);padding:1px 5px;border-radius:3px;display:inline-block}
 .div-tag.bull{background:var(--green-bg);color:var(--green)}.div-tag.bear{background:var(--red-bg);color:var(--red)}
 .scan-pct{text-align:right;font-weight:600}
@@ -168,6 +170,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .pcard-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border)}.pcard-row:last-child{border-bottom:none}
 .pcard-row .k{color:var(--text3)}.pcard-row .v{font-family:var(--mono);font-weight:600}
 .pinned-empty{color:var(--text3);font-size:12px;text-align:center;padding:30px 10px;font-style:italic}
+.pinned-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pinned-toggle{font-size:10px;color:var(--text3);cursor:pointer;font-family:var(--mono);padding:2px 6px;border:1px solid var(--border);border-radius:3px;transition:.15s}
+.pinned-toggle:hover{color:var(--cyan);border-color:var(--cyan)}
+.pcard-compact{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:4px;cursor:pointer;position:relative;transition:.15s;display:flex;align-items:center;gap:8px}
+.pcard-compact:hover{border-color:var(--border2);background:var(--bg3)}
+.pcard-compact.active{border-color:var(--cyan);background:rgba(34,211,238,.04)}
+.pcard-compact .unpin{margin-left:auto;cursor:pointer;font-size:11px;color:var(--text3);opacity:.3;flex-shrink:0}.pcard-compact .unpin:hover{opacity:1;color:var(--red)}
+.pcard-compact .pc-sym{font-family:var(--mono);font-weight:700;font-size:12px;min-width:36px}
+.pcard-compact .pc-pct{font-family:var(--mono);font-size:11px;font-weight:600;min-width:48px;text-align:right}
+.pcard-compact .pc-metric{font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap}
+.pcard-compact .pc-ofi-bar{flex:1;min-width:40px;max-width:60px}
+.pcard-expanded{border-color:var(--cyan);background:rgba(34,211,238,.03)}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 .up-c{color:var(--green)!important}.down-c{color:var(--red)!important}.ref-c{color:var(--yellow)!important}.ceil-c{color:var(--ceil)!important}.floor-c{color:var(--floor)!important}
 .text-r{text-align:right}.text-c{text-align:center}
@@ -263,19 +277,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <div class="panel" id="p-orderbook">
   <div class="scan-panel" id="scanPanel"><div class="scan-toolbar"><span class="title">Scanner</span><span class="scan-toggle" id="scanToggle" onclick="toggleScanMode()">Mở rộng</span></div><div class="scan-header compact" id="scanHead"><div data-sort="sym">Mã</div><div data-sort="pct" class="text-r sa">%</div><div data-sort="bs" class="text-r">B/S</div><div data-sort="ofi">OFI</div><div class="text-c">★</div></div><div id="scanBody"></div></div>
   <div class="detail-panel" id="detailPanel"><div id="detailContent"><div class="empty-msg">Chọn mã từ Scanner</div></div></div>
-  <div class="pinned-panel"><div class="card-title">So sánh</div><div id="pinnedContent"><div class="pinned-empty">Click ★ để ghim<br>(tối đa 6)</div></div></div>
+  <div class="pinned-panel"><div class="pinned-toolbar"><span class="card-title" style="margin:0">So sánh</span><span class="pinned-toggle" id="pinnedToggle" onclick="togglePinnedMode()">Chi tiết</span></div><div id="pinnedContent"><div class="pinned-empty">Click ★ để ghim<br>(tối đa 6)</div></div></div>
 </div>
 
 <script>
 // ═══ CONFIG ═══
 const C={proxy:'https://ssi-proxy.nhathuynhueh.workers.dev/stock/group/VN30',pollMs:15000,wsUrl:'wss://ws-openapi.dnse.com.vn/v1/stream?encoding=json',wsK:'eyJvcmciOiJkbnNlIiwiaWQiOiI3YmMxZGU4OTg2MDM0MWQyOTNiNjZmNDk5YjZjYmM4OCIsImgiOiJtdXJtdXIxMjgifQ==',wsS:'qYFpOGTT6-zTx_eQ1hUnjIAdb4SEUkdjGuqeLb0AkeXu4EShObts4opN12c0SRtCwc1ejG62reMAFHXiEa4yuA',bid:'G1',rMs:1000,HL_F:60,HL_M:300,HL_S:900,W1:1.0,W2:0.5,W3:0.25,
-  DIV_LB:240, // divergence lookback seconds
+  DIV_LB:420, // divergence lookback seconds (7 min)
   DIV_PT:0.15, // divergence price threshold % (floor for adaptive)
-  DIV_OT:15, // divergence OFI delta threshold (normalized %)
-  DIV_PERSIST:3, // consecutive checks required to trigger
+  DIV_OT:25, // divergence OFI delta threshold (normalized %)
+  DIV_PERSIST:5, // consecutive checks required to trigger (~15s)
   DIV_ADAPTIVE:1, // 1=adaptive price threshold, 0=fixed
   NORM_F:0.01, // OFI normalize factor (vol * this)
   QUOTE_GAP_RESET:60,
+  // Large trade detection
+  LT_COOLDOWN:180, // seconds cooldown per symbol
+  LT_MULTI:5, // multiplier vs avg for "large"
+  LT_MASSIVE:15, // multiplier vs avg for "massive" (push alert)
+  LT_AGG_WIN:30, // seconds to aggregate same-side large trades
+  LT_MIN_QTY:3000, // absolute minimum qty to consider "large"
 };
 const SESS={'ATO':'ATO','LO':'Liên tục','ATC':'ATC','CLOSE':'Đã đóng','C':'Đã đóng','PCA':'Sau giờ','O':'Chưa mở','P':'Tạm ngưng','PT':'Thỏa thuận','PTR':'Thỏa thuận'};
 
@@ -287,8 +307,11 @@ const S={symbols:[],stk:{},sel:null,pins:[],sortK:'pct',sortA:false,dok:false,wo
   cumDelta:{},       // sym → {running, buyVol, sellVol, history:[{t,v}], lastPush}
   trades:{},         // sym → {recent:[{t,price,qty,side}], sumQty, count} for large detection
   lastTradePrice:{}, // sym → last matched price (for Lee-Ready tick rule)
-  lastLargeTrade:{}, // sym → timestamp (60s cooldown for large trade alerts)
+  lastLargeTrade:{}, // sym → timestamp (cooldown for large trade alerts)
+  largeBuf:{}, // sym → {side, totalQty, count, firstPrice, lastPrice, firstTime, massive:bool}
   sideMode:'auto',   // 'api' | 'classify' | 'auto' (auto-detect)
+  pinnedCompact:true, // compact mode for pinned cards
+  pinnedExpanded:null, // sym currently expanded (only 1 at a time)
   // Data quality tracking
   lastQuoteTime:{},    // sym → timestamp of last quote
   lastTradePush:{},    // sym → timestamp of last sPrH push from trade WS
@@ -446,23 +469,56 @@ onTE(d){
   tr.recent.push({t:now,price,qty,side});
   tr.sumQty+=qty;tr.count++;
   if(tr.recent.length>50){const old=tr.recent.shift();tr.sumQty-=old.qty;tr.count--}
-  // Large trade alert (watchlist only, 60s cooldown)
+  // Large trade detection (aggregation + severity)
   if(tr.count>=10){
     const avgQty=tr.sumQty/tr.count;
-    if(qty>=avgQty*5){
+    const minQty=Math.max(C.LT_MIN_QTY, avgQty*C.LT_MULTI);
+    if(qty>=minQty){
       const watchlist=[S.sel,...S.pins].filter(Boolean);
       if(watchlist.includes(sym)){
         const lt=S.lastLargeTrade[sym]||0;
-        if(now-lt>=60000){
-          S.lastLargeTrade[sym]=now;
-          const sideText=side===1?'Mua':side===-1?'Bán':'GD';
-          addNoti(sideText+' lớn '+fmt(qty)+' @ '+fP(price)+' · '+sym,side===1?'bull':'bear',sym);
+        if(now-lt>=C.LT_COOLDOWN*1000){
+          const isMassive=qty>=avgQty*C.LT_MASSIVE;
+          const buf=S.largeBuf[sym];
+          if(buf && buf.side===side && now-buf.firstTime<C.LT_AGG_WIN*1000){
+            // Aggregate into existing buffer
+            buf.totalQty+=qty;buf.count++;buf.lastPrice=price;
+            if(isMassive)buf.massive=true;
+          }else{
+            // Flush old buffer if exists
+            if(buf&&buf.count>0)flushLargeBuf(sym);
+            // Start new buffer
+            S.largeBuf[sym]={side,totalQty:qty,count:1,firstPrice:price,lastPrice:price,firstTime:now,massive:isMassive};
+          }
         }
       }
     }
   }
 },
 };
+
+// ═══ LARGE TRADE BUFFER FLUSH ═══
+function flushLargeBuf(sym){
+  const buf=S.largeBuf[sym];
+  if(!buf||buf.count===0)return;
+  S.lastLargeTrade[sym]=Date.now();
+  const sideText=buf.side===1?'Mua':buf.side===-1?'Bán':'GD';
+  const priceStr=buf.count>1?fP(buf.firstPrice)+'~'+fP(buf.lastPrice):fP(buf.firstPrice);
+  const text=buf.count>1
+    ?sideText+' lớn ×'+buf.count+' tổng '+fmt(buf.totalQty)+' @ '+priceStr+' · '+sym
+    :sideText+' lớn '+fmt(buf.totalQty)+' @ '+priceStr+' · '+sym;
+  const type=buf.side===1?'bull':'bear';
+  const priority=buf.massive?'high':'low'; // massive = push bell, large = silent log
+  addNoti(text,type,sym,priority);
+  delete S.largeBuf[sym];
+}
+function flushAllLargeBufs(){
+  const now=Date.now();
+  for(const sym of Object.keys(S.largeBuf)){
+    const buf=S.largeBuf[sym];
+    if(buf&&buf.count>0&&now-buf.firstTime>=C.LT_AGG_WIN*1000)flushLargeBuf(sym);
+  }
+}
 
 // ═══ OFI ═══
 const O={
@@ -642,7 +698,7 @@ function drawDivChart(canvas,sym){
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
   const W=canvas.width=canvas.offsetWidth*dpr;
-  const H=canvas.height=80*dpr;
+  const H=canvas.height=(parseInt(canvas.getAttribute('height'))||140)*dpr;
   ctx.clearRect(0,0,W,H);
   const ML=5*dpr,MR=5*dpr,MT=5*dpr,MB=16*dpr;
   const cW=W-ML-MR,cH=H-MT-MB;
@@ -742,12 +798,15 @@ const A={
 
 // ═══ ALERT ═══
 // ═══ NOTIFICATION SYSTEM ═══
-function addNoti(text,type,sym){
-  S.notifications.unshift({time:Date.now(),text,type,sym,read:false});
+function addNoti(text,type,sym,priority){
+  priority=priority||'high'; // 'high' = push bell, 'low' = silent log
+  S.notifications.unshift({time:Date.now(),text,type,sym,read:priority==='low',priority});
   if(S.notifications.length>50)S.notifications.pop();
   renderNoti();
-  // Flash bell
-  document.getElementById('notiBell').classList.add('has-new');
+  // Flash bell only for high priority
+  if(priority==='high'){
+    document.getElementById('notiBell').classList.add('has-new');
+  }
   // Banner for aggregate only
   if(!sym){
     const bn=document.getElementById('alertBanner'),tx=document.getElementById('alertText');
@@ -769,7 +828,7 @@ function toggleNoti(){
 function clearNoti(){S.notifications=[];renderNoti()}
 function renderNoti(){
   const list=document.getElementById('notiList');
-  const unread=S.notifications.filter(n=>!n.read).length;
+  const unread=S.notifications.filter(n=>!n.read&&n.priority!=='low').length;
   const badge=document.getElementById('notiBadge');
   if(unread>0){badge.style.display='flex';badge.textContent=unread}else{badge.style.display='none'}
   if(!S.notifications.length){list.innerHTML='<div class="noti-empty">Chưa có thông báo</div>';return}
@@ -777,7 +836,7 @@ function renderNoti(){
     const t=new Date(n.time);
     const ts=t.getHours()+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0');
     const cls=n.type==='bull'?'up-c':'down-c';
-    return '<div class="noti-item'+(n.read?'':' unread')+'"'+(n.sym?' onclick="S.sel=\''+n.sym+'\';document.querySelector(\'[data-tab=orderbook]\').click();renderScanner();renderDetail();toggleNoti()"':'')+'>'+
+    return '<div class="noti-item'+(n.read?'':' unread')+(n.priority==='low'?' noti-dim':'')+'"'+(n.sym?' onclick="S.sel=\''+n.sym+'\';document.querySelector(\'[data-tab=orderbook]\').click();renderScanner();renderDetail();toggleNoti()"':'')+'>'+
       '<div class="noti-time">'+ts+(n.sym?' · '+n.sym:'')+'</div>'+
       '<div class="noti-msg '+cls+'">'+n.text+'</div></div>';
   }).join('');
@@ -925,18 +984,23 @@ function renderDetail(){
 
   h+='<div class="pos-bar-wrap" style="margin:8px 0"><div class="pos-bar-label"><span>'+fP(s.floor)+'</span><span>'+fP(s.ref)+'</span><span>'+fP(s.ceil)+'</span></div><div class="pos-bar"><div class="pos-needle" style="left:'+Math.max(0,Math.min(100,pos))+'%"></div></div></div>';
 
+  h+='<div style="margin-top:8px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Giá &amp; Thanh khoản</div></div>';
   h+='<div class="detail-grid">';
   h+='<div class="dstat"><div class="label">Spread</div><div class="val">'+fP(spread)+'</div></div>';
+  h+='<div class="dstat"><div class="label">Cao/Thấp</div><div class="val">'+fP(s.high)+'</div><div class="sub">'+fP(s.low)+'</div></div>';
+  h+='<div class="dstat"><div class="label">KLGD</div><div class="val">'+fmt(s.vol)+'</div><div class="sub">'+fmt(s.value)+'</div></div>';
+  h+='</div>';
+
+  h+='<div style="margin-top:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Dòng tiền</div></div>';
+  h+='<div class="detail-grid">';
   h+='<div class="dstat"><div class="label">Bid/Ask</div><div class="val '+(ratio>1.3?'up-c':ratio<.77?'down-c':'ref-c')+'">'+ratio.toFixed(2)+'</div><div class="sub">'+fmt(tB)+' / '+fmt(tO)+'</div></div>';
   h+='<div class="dstat"><div class="label">OFI</div><div class="val '+oLb.c+'">'+oLb.t+'</div>'+ofiBarHTML(ofiN,10)+'</div>';
-  h+='<div class="dstat"><div class="label">Cao/Thấp</div><div class="val">'+fP(s.high)+'</div><div class="sub">'+fP(s.low)+'</div></div>';
   h+='<div class="dstat"><div class="label">Mua/Bán</div><div class="val '+(bs>55?'up-c':bs<45?'down-c':'ref-c')+'">'+bs.toFixed(1)+'%</div><div class="sub">'+fmt(s.buyV)+' / '+fmt(s.sellV)+'</div></div>';
-  h+='<div class="dstat"><div class="label">KLGD</div><div class="val">'+fmt(s.vol)+'</div><div class="sub">'+fmt(s.value)+'</div></div>';
   h+='</div>';
 
   // Divergence chart: Price % vs OFI (dual line)
   if(S.sPrH[sym]&&S.sPrH[sym].length>3&&S.sOfiH[sym]&&S.sOfiH[sym].length>3){
-    h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Giá % vs OFI — '+sym+'</span><div class="div-chart-legend"><span style="color:var(--cyan)">— Giá %</span><span style="color:var(--yellow)">— OFI</span></div></div><canvas id="divChart" height="80" style="width:100%;border-radius:4px"></canvas></div>';
+    h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Giá % vs OFI — '+sym+'</span><div class="div-chart-legend"><span style="color:var(--cyan)">— Giá %</span><span style="color:var(--yellow)">— OFI</span></div></div><canvas id="divChart" height="140" style="width:100%;border-radius:4px"></canvas></div>';
   }
 
   // Cumulative Delta + Real-time B/S Pressure
@@ -970,7 +1034,7 @@ function renderDetail(){
     h+='</div>';
     // Cumulative Delta sparkline
     if(cd.history.length>3){
-      h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Cum. Delta — '+sym+'</span><span class="'+cdLbl.c+'" style="font-family:var(--mono);font-size:12px;font-weight:700">'+cdLbl.t+'</span></div><canvas id="cdChart" height="70" style="width:100%;border-radius:4px"></canvas></div>';
+      h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Cum. Delta — '+sym+'</span><span class="'+cdLbl.c+'" style="font-family:var(--mono);font-size:12px;font-weight:700">'+cdLbl.t+'</span></div><canvas id="cdChart" height="120" style="width:100%;border-radius:4px"></canvas></div>';
     }
   }
 
@@ -1002,26 +1066,62 @@ function renderDetail(){
   });
 }
 
+function togglePinnedMode(){S.pinnedCompact=!S.pinnedCompact;S.pinnedExpanded=null;document.getElementById('pinnedToggle').textContent=S.pinnedCompact?'Chi tiết':'Thu gọn';renderPinned()}
+
 function renderPinned(){
   if(!S.pins.length){document.getElementById('pinnedContent').innerHTML='<div class="pinned-empty">Click ★ để ghim<br>(tối đa 6)</div>';return}
   let h='';
-  for(const sym of S.pins){const s=S.stk[sym];if(!s)continue;const p=eP(s),bs=sBs(s),ofiN_=ofiNorm(O.get(sym,'m'),sym),oLb=ofiLbl(ofiN_),pos=sPos(s),tB=(s.bid||[]).reduce((a,l)=>a+(l.qty||0),0),tO=(s.offer||[]).reduce((a,l)=>a+(l.qty||0),0),ratio=tO>0?tB/tO:1;
+  for(const sym of S.pins){
+    const s=S.stk[sym];if(!s)continue;
+    const p=eP(s),bs=sBs(s),ofiN_=ofiNorm(O.get(sym,'m'),sym),oLb=ofiLbl(ofiN_),pos=sPos(s),tB=(s.bid||[]).reduce((a,l)=>a+(l.qty||0),0),tO=(s.offer||[]).reduce((a,l)=>a+(l.qty||0),0),ratio=tO>0?tB/tO:1;
     const div=O.stockDiv(sym);
-    h+='<div class="pcard'+(div?' div-'+(div.type==='bull'?'bull':'bear'):'')+'" data-sym="'+sym+'"><div class="unpin" data-unpin="'+sym+'">✕</div>';
-    h+='<div class="pcard-sym">'+sym+' <span class="'+pC(s.pct)+'" style="font-size:12px">'+(s.pct>=0?'+':'')+s.pct.toFixed(2)+'%</span>'+(div?' <span class="div-tag '+(div.type==='bull'?'bull':'bear')+'">'+div.tag+'</span>':'')+'</div>';
-    h+='<div class="pcard-price '+prC(p,s)+'">'+fP(p)+'</div>';
-    h+='<div style="margin:5px 0"><div style="height:5px;border-radius:3px;background:linear-gradient(90deg,var(--floor),var(--text3) 50%,var(--ceil));position:relative"><div style="position:absolute;top:-2px;width:3px;height:9px;background:var(--text);border-radius:1px;left:'+Math.max(0,Math.min(100,pos))+'%;transform:translateX(-50%)"></div></div></div>';
-    h+='<div class="pcard-row"><span class="k">B/S</span><span class="v '+(bs>55?'up-c':bs<45?'down-c':'ref-c')+'">'+bs.toFixed(0)+'%</span></div>';
-    h+='<div class="pcard-row"><span class="k">OFI</span><span class="v '+oLb.c+'">'+oLb.t+'</span></div>';
-    h+='<div style="margin:3px 0">'+ofiBarHTML(ofiN_,6)+'</div>';
-    h+='<div class="pcard-row"><span class="k">Bid/Ask</span><span class="v '+(ratio>1.3?'up-c':ratio<.77?'down-c':'ref-c')+'">'+ratio.toFixed(2)+'</span></div></div>'}
-  document.getElementById('pinnedContent').innerHTML=h}
-document.getElementById('pinnedContent').addEventListener('click',e=>{const u=e.target.closest('[data-unpin]');if(u){S.pins=S.pins.filter(s=>s!==u.dataset.unpin);renderPinned();renderScanner();return}const c=e.target.closest('.pcard');if(c){S.sel=c.dataset.sym;renderScanner();renderDetail()}});
+    const isExpanded=S.pinnedExpanded===sym;
+
+    if(S.pinnedCompact&&!isExpanded){
+      // ── COMPACT ROW ──
+      const divBorder=div?' div-'+(div.type==='bull'?'bull':'bear'):'';
+      h+='<div class="pcard-compact'+divBorder+(S.sel===sym?' active':'')+'" data-sym="'+sym+'">';
+      h+='<span class="pc-sym">'+sym+'</span>';
+      h+='<span class="pc-pct '+pC(s.pct)+'">'+(s.pct>=0?'+':'')+s.pct.toFixed(1)+'%</span>';
+      h+='<span class="pc-metric '+(bs>55?'up-c':bs<45?'down-c':'ref-c')+'">'+bs.toFixed(0)+'%</span>';
+      h+='<span class="pc-metric '+oLb.c+'">'+oLb.t+'</span>';
+      if(div)h+='<span class="div-tag '+(div.type==='bull'?'bull':'bear')+'" style="font-size:9px">D'+(div.type==='bull'?'↑':'↓')+'</span>';
+      h+='<span class="unpin" data-unpin="'+sym+'">✕</span>';
+      h+='</div>';
+    }else{
+      // ── FULL CARD (original or expanded) ──
+      h+='<div class="pcard'+(div?' div-'+(div.type==='bull'?'bull':'bear'):'')+(isExpanded?' pcard-expanded':'')+'" data-sym="'+sym+'"><div class="unpin" data-unpin="'+sym+'">✕</div>';
+      h+='<div class="pcard-sym">'+sym+' <span class="'+pC(s.pct)+'" style="font-size:12px">'+(s.pct>=0?'+':'')+s.pct.toFixed(2)+'%</span>'+(div?' <span class="div-tag '+(div.type==='bull'?'bull':'bear')+'">'+div.tag+'</span>':'')+'</div>';
+      h+='<div class="pcard-price '+prC(p,s)+'">'+fP(p)+'</div>';
+      h+='<div style="margin:5px 0"><div style="height:5px;border-radius:3px;background:linear-gradient(90deg,var(--floor),var(--text3) 50%,var(--ceil));position:relative"><div style="position:absolute;top:-2px;width:3px;height:9px;background:var(--text);border-radius:1px;left:'+Math.max(0,Math.min(100,pos))+'%;transform:translateX(-50%)"></div></div></div>';
+      h+='<div class="pcard-row"><span class="k">B/S</span><span class="v '+(bs>55?'up-c':bs<45?'down-c':'ref-c')+'">'+bs.toFixed(0)+'%</span></div>';
+      h+='<div class="pcard-row"><span class="k">OFI</span><span class="v '+oLb.c+'">'+oLb.t+'</span></div>';
+      h+='<div style="margin:3px 0">'+ofiBarHTML(ofiN_,6)+'</div>';
+      h+='<div class="pcard-row"><span class="k">Bid/Ask</span><span class="v '+(ratio>1.3?'up-c':ratio<.77?'down-c':'ref-c')+'">'+ratio.toFixed(2)+'</span></div></div>';
+    }
+  }
+  document.getElementById('pinnedContent').innerHTML=h;
+}
+document.getElementById('pinnedContent').addEventListener('click',e=>{
+  const u=e.target.closest('[data-unpin]');
+  if(u){e.stopPropagation();S.pins=S.pins.filter(s=>s!==u.dataset.unpin);if(S.pinnedExpanded===u.dataset.unpin)S.pinnedExpanded=null;renderPinned();renderScanner();return}
+  const c=e.target.closest('.pcard-compact')||e.target.closest('.pcard');
+  if(c){
+    const sym=c.dataset.sym;
+    if(S.pinnedCompact&&c.classList.contains('pcard-compact')){
+      // In compact mode: click expands this card (toggle)
+      S.pinnedExpanded=S.pinnedExpanded===sym?null:sym;
+      renderPinned();
+    }
+    // Always select in detail
+    S.sel=sym;renderScanner();renderDetail();
+  }
+});
 
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));t.classList.add('active');document.getElementById('p-'+t.dataset.tab).classList.add('active')}));
 
 // ═══ SETTINGS ═══
-const DEFAULTS={HL_F:60,HL_M:300,HL_S:900,W1:1.0,W2:0.5,W3:0.25,DIV_LB:240,DIV_PT:0.15,DIV_OT:15,DIV_PERSIST:3,DIV_ADAPTIVE:1,NORM_F:0.01};
+const DEFAULTS={HL_F:60,HL_M:300,HL_S:900,W1:1.0,W2:0.5,W3:0.25,DIV_LB:420,DIV_PT:0.15,DIV_OT:25,DIV_PERSIST:5,DIV_ADAPTIVE:1,NORM_F:0.01};
 
 function openSettings(){
   document.getElementById('s_hlf').value=C.HL_F;
@@ -1089,7 +1189,7 @@ const LS={
   save(){
     try{
       const d={
-        sel:S.sel,pins:S.pins,sortK:S.sortK,sortA:S.sortA,scanWide:S.scanWide,
+        sel:S.sel,pins:S.pins,sortK:S.sortK,sortA:S.sortA,scanWide:S.scanWide,pinnedCompact:S.pinnedCompact,
         ofiH:S.ofiH,sOfiH:S.sOfiH,sOfi:S.sOfi,prH:S.prH,sPrH:S.sPrH,
         ofiN:S.ofiN,notifications:S.notifications,
         date:new Date().toLocaleDateString('sv-SE'),
@@ -1110,6 +1210,7 @@ const LS={
       if(d.sortK)S.sortK=d.sortK;
       if(d.sortA!==undefined)S.sortA=d.sortA;
       if(d.scanWide!==undefined){S.scanWide=d.scanWide;if(S.scanWide)document.getElementById('p-orderbook').style.setProperty('--scan-w','380px');document.getElementById('scanToggle').textContent=S.scanWide?'Thu gọn':'Mở rộng'}
+      if(d.pinnedCompact!==undefined){S.pinnedCompact=d.pinnedCompact;document.getElementById('pinnedToggle').textContent=S.pinnedCompact?'Chi tiết':'Thu gọn'}
       // Only restore OFI data if same day and < 8h old
       if(d.date===today&&d.savedAt&&Date.now()-d.savedAt<28800000){
         if(d.ofiH)S.ofiH=d.ofiH;
@@ -1138,6 +1239,7 @@ async function init(){
   setInterval(render,C.rMs);render();hideLoading();
   setInterval(()=>D.poll(),C.pollMs);
   setInterval(checkDivergence,3000); // Per-stock divergence check (sync with trade WS ~3s)
+  setInterval(flushAllLargeBufs,5000); // Flush aggregated large trades
   setInterval(()=>LS.save(),10000); // Auto-save every 10s
 }
 init();
