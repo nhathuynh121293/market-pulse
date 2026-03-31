@@ -333,6 +333,7 @@ const S={symbols:[],stk:{},sel:null,pins:[],sortK:'pct',sortA:false,dok:false,wo
   cumDelta:{},       // sym → {running, buyVol, sellVol, history:[{t,v}], lastPush}
   trades:{},         // sym → {recent:[{t,price,qty,side}], sumQty, count} for large detection
   lastTradePrice:{}, // sym → last matched price (for Lee-Ready tick rule)
+  firstTradeTime:{}, // sym → timestamp of first matched trade (for chart clipping)
   lastLargeTrade:{}, // sym → timestamp (cooldown for large trade alerts)
   largeBuf:{}, // sym → {side, totalQty, count, firstPrice, lastPrice, firstTime, massive:bool}
   sideMode:'auto',   // 'api' | 'classify' | 'auto' (auto-detect)
@@ -347,6 +348,11 @@ const S={symbols:[],stk:{},sel:null,pins:[],sortK:'pct',sortA:false,dok:false,wo
 };
 
 // ═══ HELPERS ═══
+const valOr=(v,d)=>{const n=parseFloat(v);return isNaN(n)?d:n};
+const intOr=(v,d)=>{const n=parseInt(v);return isNaN(n)?d:n};
+const arrMin=(a,init=Infinity)=>{let m=init;for(let i=0;i<a.length;i++)if(a[i]<m)m=a[i];return m};
+const arrMax=(a,init=-Infinity)=>{let m=init;for(let i=0;i<a.length;i++)if(a[i]>m)m=a[i];return m};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const fmt=n=>{if(n==null||isNaN(n))return'-';const a=Math.abs(n);if(a>=1e12)return(n/1e12).toFixed(1)+'T';if(a>=1e9)return(n/1e9).toFixed(1)+'B';if(a>=1e6)return(n/1e6).toFixed(1)+'M';if(a>=1e3)return(n/1e3).toFixed(1)+'K';return n.toLocaleString('vi-VN')};
 
 // ═══ THEME ═══
@@ -405,25 +411,25 @@ async function hmac(sec,msg){const e=new TextEncoder();const k=await crypto.subt
 const D={
   async poll(){try{const r=await fetch(C.proxy,{signal:AbortSignal.timeout(12000)});if(!r.ok)throw 0;const j=await r.json();if(j.code!=='SUCCESS')throw 0;D.parse(j.data);S.dok=true;return true}catch{return false}},
   parse(data){const sy=[],sk={};for(const d of data){const sym=d.stockSymbol;if(!sym)continue;sy.push(sym);sk[sym]={ref:d.refPrice||0,ceil:d.ceiling||0,floor:d.floor||0,price:d.matchedPrice||0,open:d.openPrice||0,high:d.highest||0,low:d.lowest||0,vol:d.nmTotalTradedQty||0,value:d.nmTotalTradedValue||0,buyV:d.stockBUVol||0,sellV:d.stockSDVol||0,fBuy:d.buyForeignQtty||0,fSell:d.sellForeignQtty||0,fBuyVal:d.buyForeignValue||0,fSellVal:d.sellForeignValue||0,bid:[{price:d.best1Bid,qty:d.best1BidVol},{price:d.best2Bid,qty:d.best2BidVol},{price:d.best3Bid,qty:d.best3BidVol}].filter(l=>l.price>0),offer:[{price:d.best1Offer,qty:d.best1OfferVol},{price:d.best2Offer,qty:d.best2OfferVol},{price:d.best3Offer,qty:d.best3OfferVol}].filter(l=>l.price>0),session:d.session||'',pct:d.priceChangePercent||0,name:d.companyNameVi||''}}
-    sy.sort();S.symbols=sy;S.stk=sk;for(const sym of sy){if(sk[sym].session){S.session=sk[sym].session;break}}
+    sy.sort();S.symbols=sy;S.stk=sk;const _sc={};for(const sym of sy){const ss=sk[sym].session;if(ss)_sc[ss]=(_sc[ss]||0)+1}S.session=Object.entries(_sc).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
     let sp=0,cn=0;for(const sym of sy){const s=sk[sym];if(s.pct){sp+=s.pct;cn++}}S.prH.push({time:Date.now(),avg:cn>0?sp/cn:0});if(S.prH.length>200)S.prH.shift();
     // Per-stock price tracking for divergence (fallback — trade WS is primary source)
     const now=Date.now();for(const sym of sy){if(!S.sPrH[sym])S.sPrH[sym]=[];const lastWs=S.lastTradePush[sym]||0;if(now-lastWs>15000){S.sPrH[sym].push({t:now,pct:sk[sym].pct||0});if(S.sPrH[sym].length>1000)S.sPrH[sym].shift()}}},
 };
 
 // ═══ WS ═══
-const W={ws:null,connect(){if(!S.symbols.length){setTimeout(W.connect,3000);return}updateConn('connecting','Kết nối...');try{const ws=new WebSocket(C.wsUrl);W.ws=ws;
-  ws.onclose=()=>{S.wok=false;S.prevQ={};S.lastQuoteTime={};S.lastTradePush={};S.lastTradePrice={};S.sideMode='auto';updateConn('off','Mất kết nối');setTimeout(W.connect,5000)};
-  ws.onerror=()=>{};
+const W={ws:null,retryDelay:5000,connect(){if(!S.symbols.length){setTimeout(W.connect,3000);return}if(W.ws){try{W.ws.onclose=null;W.ws.close()}catch{}}updateConn('connecting','Kết nối...');try{const ws=new WebSocket(C.wsUrl);W.ws=ws;
+  ws.onclose=()=>{S.wok=false;S.prevQ={};S.lastQuoteTime={};S.lastTradePush={};S.lastTradePrice={};S.sideMode='auto';updateConn('off','Mất kết nối');W.retryDelay=Math.min(W.retryDelay*1.5,60000);setTimeout(W.connect,W.retryDelay)};
+  ws.onerror=e=>{console.warn('[WS] error',e)};
   ws.onmessage=async e=>{let d;try{d=JSON.parse(e.data)}catch{return}const a=d.action||d.a;
     if(d.session_id||d.sid){W.auth(ws);return}
-    if(a==='auth_success'){S.wok=true;updateConn('ok',S.quotesPerSec+' q/s');W.sub(ws);return}
+    if(a==='auth_success'){S.wok=true;W.retryDelay=5000;updateConn('ok',S.quotesPerSec+' q/s');W.sub(ws);return}
     if(a==='auth_error'||a==='error'){updateConn('off','Lỗi xác thực');return}
     if(a==='ping'){ws.send('{"action":"pong"}');return}
     if(a==='pong'||a==='subscribed')return;
     if(d.T==='q')W.onQ(d);
     if(d.T==='t')W.onT(d);
-    if(d.T==='te')W.onTE(d)}}catch{updateConn('off','Lỗi');setTimeout(W.connect,5000)}},
+    if(d.T==='te')W.onTE(d)}}catch{updateConn('off','Lỗi');W.retryDelay=Math.min(W.retryDelay*1.5,60000);setTimeout(W.connect,W.retryDelay)}},
 async auth(ws){const ts=Math.floor(Date.now()/1000),nc=''+Date.now()*1000;ws.send(JSON.stringify({action:'auth',api_key:C.wsK,signature:await hmac(C.wsS,C.wsK+':'+ts+':'+nc),timestamp:ts,nonce:nc}))},
 sub(ws){ws.send(JSON.stringify({action:'subscribe',channels:[{name:'top_price.'+C.bid+'.json',symbols:S.symbols},{name:'tick.'+C.bid+'.json',symbols:S.symbols},{name:'tick_extra.'+C.bid+'.json',symbols:S.symbols}]}))},
 onQ(d){
@@ -464,6 +470,7 @@ onT(d){
   const s=S.stk[sym];if(!s)return;
   const mp=d.MatchPrice||d.match_price;
   if(!mp||mp<=0)return;
+  if(!S.firstTradeTime[sym])S.firstTradeTime[sym]=Date.now();
   const price=Math.round(mp*1000); // DNSE unit → VND
   const hp=d.HighestPrice||d.highest_price;
   const lp=d.LowestPrice||d.lowest_price;
@@ -687,7 +694,7 @@ function drawOfiChart(canvas,dataArr,label){
   const tMin=times[0],tMax=times[times.length-1];
 
   const vals=dataArr.map(p=>p.v);
-  const vMin=Math.min(...vals,-3), vMax=Math.max(...vals,3);
+  const vMin=Math.min(arrMin(vals),-3), vMax=Math.max(arrMax(vals),3);
   const vRange=Math.max(vMax-vMin,1);
   const vToY=v=>MT+cH-((v-vMin)/vRange)*cH;
 
@@ -773,12 +780,14 @@ function drawOfiChart(canvas,dataArr,label){
 
 // ═══ DIVERGENCE CHART (stacked: Price % panel + OFI panel, shared time axis) ═══
 function drawDivChart(canvas,sym){
-  const prData=S.sPrH[sym],ofiRaw=S.sOfiH[sym];
-  if(!prData||prData.length<3||!ofiRaw||ofiRaw.length<3)return;
-  // Clip OFI to start from first price timestamp (ignore ATO/pre-trade data)
-  const tFirstPrice=prData[0].t;
-  const ofiData=ofiRaw.filter(p=>p.t>=tFirstPrice);
-  if(ofiData.length<3)return;
+  const prRaw=S.sPrH[sym],ofiRaw=S.sOfiH[sym];
+  if(!prRaw||!ofiRaw)return;
+  // Clip to start from first actual trade (ignore ATO/pre-trade data)
+  const ft=S.firstTradeTime[sym];
+  if(!ft)return;
+  const prData=prRaw.filter(p=>p.t>=ft);
+  const ofiData=ofiRaw.filter(p=>p.t>=ft);
+  if(prData.length<3||ofiData.length<3)return;
   const tc=chartColors();
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
@@ -797,14 +806,14 @@ function drawDivChart(canvas,sym){
 
   // Price scale
   const prVals=prData.map(p=>p.pct);
-  const prMin=Math.min(...prVals,0),prMax=Math.max(...prVals,0);
+  const prMin=Math.min(arrMin(prVals),0),prMax=Math.max(arrMax(prVals),0);
   const prRange=Math.max(prMax-prMin,0.01);
   const p1Top=MT,p1Bot=MT+pH;
   const prToY=v=>p1Top+pH-((v-prMin)/prRange)*pH;
 
   // OFI scale
   const ofiVals=ofiData.map(p=>p.v);
-  const ofiMin=Math.min(...ofiVals,0),ofiMax=Math.max(...ofiVals,0);
+  const ofiMin=Math.min(arrMin(ofiVals),0),ofiMax=Math.max(arrMax(ofiVals),0);
   const ofiRange=Math.max(ofiMax-ofiMin,1);
   const p2Top=MT+pH+GAP,p2Bot=p2Top+pH;
   const ofiToY=v=>p2Top+pH-((v-ofiMin)/ofiRange)*pH;
@@ -966,20 +975,23 @@ function renderNoti(){
     const t=new Date(n.time);
     const ts=t.getHours()+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0');
     const cls=n.type==='bull'?'up-c':'down-c';
-    return '<div class="noti-item'+(n.read?'':' unread')+(n.priority==='low'?' noti-dim':'')+'"'+(n.sym?' onclick="S.sel=\''+n.sym+'\';document.querySelector(\'[data-tab=orderbook]\').click();renderScanner();renderDetail();toggleNoti()"':'')+'>'+
-      '<div class="noti-time">'+ts+(n.sym?' · '+n.sym:'')+'</div>'+
-      '<div class="noti-msg '+cls+'">'+n.text+'</div></div>';
+    return '<div class="noti-item'+(n.read?'':' unread')+(n.priority==='low'?' noti-dim':'')+'"'+(n.sym?' data-noti-sym="'+esc(n.sym)+'"':'')+'>'+
+      '<div class="noti-time">'+esc(ts)+(n.sym?' · '+esc(n.sym):'')+'</div>'+
+      '<div class="noti-msg '+cls+'">'+esc(n.text)+'</div></div>';
   }).join('');
 }
+document.getElementById('notiList').addEventListener('click',e=>{
+  const item=e.target.closest('[data-noti-sym]');
+  if(!item)return;
+  S.sel=item.dataset.notiSym;
+  document.querySelector('[data-tab=orderbook]').click();
+  renderScanner();renderDetail();toggleNoti();
+});
 // Close drawer when clicking outside
 document.addEventListener('click',e=>{
   const wrap=document.querySelector('.noti-wrap');
   if(wrap&&!wrap.contains(e.target)){document.getElementById('notiDrawer').classList.remove('open')}
 });
-
-function checkAlert(){
-  // VN30 aggregate divergence removed — per-stock divergence in checkDivergence()
-}
 
 // ═══ PER-STOCK DIVERGENCE (persistence-based, watchlist only) ═══
 function checkDivergence(){
@@ -1117,7 +1129,7 @@ function renderDetail(){
   // ── CHARTS FIRST (most important visual info) ──
 
   // Divergence chart: Price % vs OFI (stacked panels)
-  if(S.sPrH[sym]&&S.sPrH[sym].length>3&&S.sOfiH[sym]&&S.sOfiH[sym].length>3){
+  if(S.firstTradeTime[sym]&&S.sPrH[sym]&&S.sPrH[sym].length>3&&S.sOfiH[sym]&&S.sOfiH[sym].length>3){
     h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Giá % vs OFI — '+sym+'</span><div class="div-chart-legend"><span style="color:var(--cyan)">■ Giá %</span><span style="color:var(--yellow)">■ OFI</span><span style="color:var(--text3);font-style:italic;font-size:9px">vùng tô = phân kỳ</span></div></div><canvas id="divChart" height="160" style="width:100%;border-radius:4px"></canvas></div>';
   }
 
@@ -1143,6 +1155,9 @@ function renderDetail(){
     h+='<div style="margin-top:4px"><div style="height:6px;border-radius:3px;background:var(--bg3);overflow:hidden"><div style="height:100%;width:'+cdBuyPct+'%;background:'+(cdBuyPct>55?'var(--green)':cdBuyPct<45?'var(--red)':'var(--text3)')+';border-radius:3px;transition:width .3s"></div></div></div></div>';
     h+='<div class="dstat"><div class="label">CVD %</div><div class="val '+cdNLbl.c+'">'+cdNLbl.t+'</div>'+(S.sideMode!=='auto'?'<div class="sub" style="color:var(--text3)">Side: '+S.sideMode+'</div>':'')+'</div>';
     h+='</div>';
+  }else{
+    h+='<div style="margin-top:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Lệnh khớp chủ động</div></div>';
+    h+='<div style="padding:12px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text3);font-style:italic">Chờ lệnh khớp...</div>';
   }
 
   // ── STATS (secondary info) ──
@@ -1272,22 +1287,22 @@ function closeSettings(){
 }
 
 function applySettings(){
-  C.HL_F=parseFloat(document.getElementById('s_hlf').value)||DEFAULTS.HL_F;
-  C.HL_M=parseFloat(document.getElementById('s_hlm').value)||DEFAULTS.HL_M;
-  C.HL_S=parseFloat(document.getElementById('s_hls').value)||DEFAULTS.HL_S;
-  C.W1=parseFloat(document.getElementById('s_w1').value)||DEFAULTS.W1;
-  C.W2=parseFloat(document.getElementById('s_w2').value)||DEFAULTS.W2;
-  C.W3=parseFloat(document.getElementById('s_w3').value)||DEFAULTS.W3;
-  C.DIV_LB=parseFloat(document.getElementById('s_divlb').value)||DEFAULTS.DIV_LB;
-  C.DIV_PT=parseFloat(document.getElementById('s_divpt').value)||DEFAULTS.DIV_PT;
-  C.DIV_OT=parseFloat(document.getElementById('s_divot').value)||DEFAULTS.DIV_OT;
-  C.DIV_PERSIST=parseInt(document.getElementById('s_divper').value)||DEFAULTS.DIV_PERSIST;
-  C.DIV_ADAPTIVE=parseInt(document.getElementById('s_divadp').value);
-  C.NORM_F=parseFloat(document.getElementById('s_norm').value)||DEFAULTS.NORM_F;
-  C.LT_MIN_QTY=parseInt(document.getElementById('s_ltmin').value)||DEFAULTS.LT_MIN_QTY;
-  C.LT_MULTI=parseInt(document.getElementById('s_ltmulti').value)||DEFAULTS.LT_MULTI;
-  C.LT_MASSIVE=parseInt(document.getElementById('s_ltmassive').value)||DEFAULTS.LT_MASSIVE;
-  C.LT_COOLDOWN=parseInt(document.getElementById('s_ltcool').value)||DEFAULTS.LT_COOLDOWN;
+  C.HL_F=valOr(document.getElementById('s_hlf').value,DEFAULTS.HL_F);
+  C.HL_M=valOr(document.getElementById('s_hlm').value,DEFAULTS.HL_M);
+  C.HL_S=valOr(document.getElementById('s_hls').value,DEFAULTS.HL_S);
+  C.W1=valOr(document.getElementById('s_w1').value,DEFAULTS.W1);
+  C.W2=valOr(document.getElementById('s_w2').value,DEFAULTS.W2);
+  C.W3=valOr(document.getElementById('s_w3').value,DEFAULTS.W3);
+  C.DIV_LB=valOr(document.getElementById('s_divlb').value,DEFAULTS.DIV_LB);
+  C.DIV_PT=valOr(document.getElementById('s_divpt').value,DEFAULTS.DIV_PT);
+  C.DIV_OT=valOr(document.getElementById('s_divot').value,DEFAULTS.DIV_OT);
+  C.DIV_PERSIST=intOr(document.getElementById('s_divper').value,DEFAULTS.DIV_PERSIST);
+  C.DIV_ADAPTIVE=intOr(document.getElementById('s_divadp').value,DEFAULTS.DIV_ADAPTIVE);
+  C.NORM_F=valOr(document.getElementById('s_norm').value,DEFAULTS.NORM_F);
+  C.LT_MIN_QTY=intOr(document.getElementById('s_ltmin').value,DEFAULTS.LT_MIN_QTY);
+  C.LT_MULTI=intOr(document.getElementById('s_ltmulti').value,DEFAULTS.LT_MULTI);
+  C.LT_MASSIVE=intOr(document.getElementById('s_ltmassive').value,DEFAULTS.LT_MASSIVE);
+  C.LT_COOLDOWN=intOr(document.getElementById('s_ltcool').value,DEFAULTS.LT_COOLDOWN);
   // Save settings to localStorage
   try{localStorage.setItem('mktpulse_settings',JSON.stringify({HL_F:C.HL_F,HL_M:C.HL_M,HL_S:C.HL_S,W1:C.W1,W2:C.W2,W3:C.W3,DIV_LB:C.DIV_LB,DIV_PT:C.DIV_PT,DIV_OT:C.DIV_OT,DIV_PERSIST:C.DIV_PERSIST,DIV_ADAPTIVE:C.DIV_ADAPTIVE,NORM_F:C.NORM_F,LT_MIN_QTY:C.LT_MIN_QTY,LT_MULTI:C.LT_MULTI,LT_MASSIVE:C.LT_MASSIVE,LT_COOLDOWN:C.LT_COOLDOWN}))}catch{}
   closeSettings();
@@ -1308,15 +1323,15 @@ function loadSettings(){
     const raw=localStorage.getItem('mktpulse_settings');
     if(!raw)return;
     const d=JSON.parse(raw);
-    if(d.HL_F)C.HL_F=d.HL_F;if(d.HL_M)C.HL_M=d.HL_M;if(d.HL_S)C.HL_S=d.HL_S;
+    if(d.HL_F!=null)C.HL_F=d.HL_F;if(d.HL_M!=null)C.HL_M=d.HL_M;if(d.HL_S!=null)C.HL_S=d.HL_S;
     if(d.W1!=null)C.W1=d.W1;if(d.W2!=null)C.W2=d.W2;if(d.W3!=null)C.W3=d.W3;
-    if(d.DIV_LB)C.DIV_LB=d.DIV_LB;if(d.DIV_PT)C.DIV_PT=d.DIV_PT;if(d.DIV_OT)C.DIV_OT=d.DIV_OT;
-    if(d.DIV_PERSIST)C.DIV_PERSIST=d.DIV_PERSIST;if(d.DIV_ADAPTIVE!=null)C.DIV_ADAPTIVE=d.DIV_ADAPTIVE;
-    if(d.NORM_F)C.NORM_F=d.NORM_F;
-    if(d.LT_MIN_QTY)C.LT_MIN_QTY=d.LT_MIN_QTY;
-    if(d.LT_MULTI)C.LT_MULTI=d.LT_MULTI;
-    if(d.LT_MASSIVE)C.LT_MASSIVE=d.LT_MASSIVE;
-    if(d.LT_COOLDOWN)C.LT_COOLDOWN=d.LT_COOLDOWN;
+    if(d.DIV_LB!=null)C.DIV_LB=d.DIV_LB;if(d.DIV_PT!=null)C.DIV_PT=d.DIV_PT;if(d.DIV_OT!=null)C.DIV_OT=d.DIV_OT;
+    if(d.DIV_PERSIST!=null)C.DIV_PERSIST=d.DIV_PERSIST;if(d.DIV_ADAPTIVE!=null)C.DIV_ADAPTIVE=d.DIV_ADAPTIVE;
+    if(d.NORM_F!=null)C.NORM_F=d.NORM_F;
+    if(d.LT_MIN_QTY!=null)C.LT_MIN_QTY=d.LT_MIN_QTY;
+    if(d.LT_MULTI!=null)C.LT_MULTI=d.LT_MULTI;
+    if(d.LT_MASSIVE!=null)C.LT_MASSIVE=d.LT_MASSIVE;
+    if(d.LT_COOLDOWN!=null)C.LT_COOLDOWN=d.LT_COOLDOWN;
     console.log('[Settings] Loaded custom OFI params');
   }catch{}
 }
@@ -1330,7 +1345,7 @@ const LS={
         sel:S.sel,pins:S.pins,sortK:S.sortK,sortA:S.sortA,scanWide:S.scanWide,pinnedCompact:S.pinnedCompact,
         ofiH:S.ofiH,sOfiH:S.sOfiH,sOfi:S.sOfi,prH:S.prH,sPrH:S.sPrH,
         ofiN:S.ofiN,notifications:S.notifications,
-        cumDelta:S.cumDelta,sideMode:S.sideMode,
+        cumDelta:S.cumDelta,sideMode:S.sideMode,firstTradeTime:S.firstTradeTime,
         date:new Date().toLocaleDateString('sv-SE'),
         savedAt:Date.now(),
       };
@@ -1361,6 +1376,7 @@ const LS={
         if(d.notifications)S.notifications=d.notifications;
         if(d.cumDelta)S.cumDelta=d.cumDelta;
         if(d.sideMode&&d.sideMode!=='auto')S.sideMode=d.sideMode;
+        if(d.firstTradeTime)S.firstTradeTime=d.firstTradeTime;
         console.log('[LS] Restored OFI+CVD data, age:',Math.round((Date.now()-d.savedAt)/1000)+'s');
       }else{
         console.log('[LS] OFI data expired, fresh start');
@@ -1369,20 +1385,29 @@ const LS={
   },
 };
 
-function render(){O.snap();checkAlert();const at=document.querySelector('.tab.active').dataset.tab;if(at==='overview')renderOverview();else if(at==='heatmap')renderHeatmap();else if(at==='orderbook'){renderScanner();renderDetail();renderPinned()}}
+function render(){if(document.hidden)return;O.snap();const at=document.querySelector('.tab.active').dataset.tab;if(at==='overview')renderOverview();else if(at==='heatmap')renderHeatmap();else if(at==='orderbook'){renderScanner();renderDetail();renderPinned()}}
 async function init(){
   setTimeout(hideLoading,20000);
   loadTheme(); // Restore theme preference
   loadSettings(); // Restore custom OFI params
   LS.load(); // Restore saved state
   setLoading(20,'Tải dữ liệu VN30...');
-  let ok=await D.poll();if(!ok){setLoading(40,'Thử lại...');await D.poll()}
+  let ok=await D.poll();if(!ok){setLoading(40,'Thử lại...');ok=await D.poll()}
+  if(!ok){setLoading(100,'Không thể tải dữ liệu. Kiểm tra kết nối.');return}
   setLoading(80,S.symbols.length+' mã đã tải');W.connect();
   setInterval(render,C.rMs);render();hideLoading();
   setInterval(()=>D.poll(),C.pollMs);
   setInterval(checkDivergence,3000); // Per-stock divergence check (sync with trade WS ~3s)
   setInterval(flushAllLargeBufs,5000); // Flush aggregated large trades
   setInterval(()=>LS.save(),10000); // Auto-save every 10s
+  // Auto-reset when switching back to tab on a new day
+  const startDate=new Date().toLocaleDateString('sv-SE');
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'){
+      const now=new Date().toLocaleDateString('sv-SE');
+      if(now!==startDate){console.log('[Day change] Reloading...');location.reload()}
+    }
+  });
 }
 init();
 </script>
