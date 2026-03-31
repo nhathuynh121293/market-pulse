@@ -137,11 +137,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .scan-toggle:hover{color:var(--cyan);border-color:var(--cyan)}
 .scan-header{display:grid;gap:4px;padding:4px 6px;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;position:sticky;top:0;background:var(--bg2);z-index:2}
 .scan-header.compact{grid-template-columns:46px 50px 40px 1fr 26px}
-.scan-header.wide{grid-template-columns:46px 50px 40px 50px 1fr 1fr 26px}
+.scan-header.wide{grid-template-columns:46px 50px 40px 1fr 1fr 26px}
 .scan-header>div:hover{color:var(--cyan)}.scan-header .sa{color:var(--cyan)}
 .scan-row{display:grid;gap:4px;padding:5px 6px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:.1s;border-bottom:1px solid var(--border);align-items:center}
 .scan-row.compact{grid-template-columns:46px 50px 40px 1fr 26px}
-.scan-row.wide{grid-template-columns:46px 50px 40px 50px 1fr 1fr 26px}
+.scan-row.wide{grid-template-columns:46px 50px 40px 1fr 1fr 26px}
 .scan-row:hover{background:var(--bg3)}.scan-row.active{background:var(--blue-bg)}
 .scan-sym{font-weight:700;font-size:13px}
 .scan-row.div-bull{border-left:3px solid var(--green)}.scan-row.div-bear{border-left:3px solid var(--red)}
@@ -408,7 +408,7 @@ const D={
     sy.sort();S.symbols=sy;S.stk=sk;for(const sym of sy){if(sk[sym].session){S.session=sk[sym].session;break}}
     let sp=0,cn=0;for(const sym of sy){const s=sk[sym];if(s.pct){sp+=s.pct;cn++}}S.prH.push({time:Date.now(),avg:cn>0?sp/cn:0});if(S.prH.length>200)S.prH.shift();
     // Per-stock price tracking for divergence (fallback — trade WS is primary source)
-    const now=Date.now();for(const sym of sy){if(!S.sPrH[sym])S.sPrH[sym]=[];const lastWs=S.lastTradePush[sym]||0;if(now-lastWs>15000){S.sPrH[sym].push({t:now,pct:sk[sym].pct||0});if(S.sPrH[sym].length>300)S.sPrH[sym].shift()}}},
+    const now=Date.now();for(const sym of sy){if(!S.sPrH[sym])S.sPrH[sym]=[];const lastWs=S.lastTradePush[sym]||0;if(now-lastWs>15000){S.sPrH[sym].push({t:now,pct:sk[sym].pct||0});if(S.sPrH[sym].length>1000)S.sPrH[sym].shift()}}},
 };
 
 // ═══ WS ═══
@@ -479,7 +479,7 @@ onT(d){
     S.lastTradePush[sym]=now;
     if(!S.sPrH[sym])S.sPrH[sym]=[];
     S.sPrH[sym].push({t:now,pct:s.pct});
-    if(S.sPrH[sym].length>300)S.sPrH[sym].shift();
+    if(S.sPrH[sym].length>1000)S.sPrH[sym].shift();
   }
 },
 // ═══ TRADE EXTRA (side classification + cumulative delta) ═══
@@ -523,7 +523,7 @@ onTE(d){
   if(now-cd.lastPush>=3000){
     cd.lastPush=now;
     cd.history.push({t:now,v:cd.running});
-    if(cd.history.length>300)cd.history.shift();
+    if(cd.history.length>1000)cd.history.shift();
   }
   // Track recent trades for large trade detection
   if(!S.trades[sym])S.trades[sym]={recent:[],sumQty:0,count:0};
@@ -773,8 +773,12 @@ function drawOfiChart(canvas,dataArr,label){
 
 // ═══ DIVERGENCE CHART (stacked: Price % panel + OFI panel, shared time axis) ═══
 function drawDivChart(canvas,sym){
-  const prData=S.sPrH[sym],ofiData=S.sOfiH[sym];
-  if(!prData||prData.length<3||!ofiData||ofiData.length<3)return;
+  const prData=S.sPrH[sym],ofiRaw=S.sOfiH[sym];
+  if(!prData||prData.length<3||!ofiRaw||ofiRaw.length<3)return;
+  // Clip OFI to start from first price timestamp (ignore ATO/pre-trade data)
+  const tFirstPrice=prData[0].t;
+  const ofiData=ofiRaw.filter(p=>p.t>=tFirstPrice);
+  if(ofiData.length<3)return;
   const tc=chartColors();
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
@@ -1051,14 +1055,14 @@ function renderHeatmap(){
   document.getElementById('topUp').innerHTML=topUp.map(m=>mk(m)).join('');document.getElementById('topDown').innerHTML=topDown.map(m=>mk(m)).join('');document.getElementById('topVol').innerHTML=topVol.map(m=>mk(m,1)).join('');
 }
 
-function toggleScanMode(){S.scanWide=!S.scanWide;document.getElementById('scanToggle').textContent=S.scanWide?'Thu gọn':'Mở rộng';document.getElementById('p-orderbook').style.setProperty('--scan-w',S.scanWide?'420px':'280px');renderScanner()}
+function toggleScanMode(){S.scanWide=!S.scanWide;document.getElementById('scanToggle').textContent=S.scanWide?'Thu gọn':'Mở rộng';document.getElementById('p-orderbook').style.setProperty('--scan-w',S.scanWide?'380px':'280px');renderScanner()}
 
 function renderScanner(){
   const w=S.scanWide,cls=w?'wide':'compact';
   const arr=S.symbols.map(sym=>{const s=S.stk[sym]||{};return{sym,pct:s.pct||0,bs:sBs(s),ofi:ofiNorm(O.get(sym,'m'),sym),ff:sFfPct(s),pos:sPos(s),vol:s.vol||0,cd:cdNorm(sym)}});
   arr.sort((a,b)=>{let va,vb;switch(S.sortK){case'sym':return S.sortA?a.sym.localeCompare(b.sym):b.sym.localeCompare(a.sym);case'pct':va=a.pct;vb=b.pct;break;case'bs':va=a.bs;vb=b.bs;break;case'ofi':va=a.ofi;vb=b.ofi;break;case'cd':va=a.cd;vb=b.cd;break;case'ff':va=a.ff;vb=b.ff;break;default:va=a.pct;vb=b.pct}return S.sortA?va-vb:vb-va});
   let hh='';
-  if(w)hh='<div data-sort="sym">Mã</div><div data-sort="pct" class="text-r'+(S.sortK==='pct'?' sa':'')+'">%</div><div data-sort="bs" class="text-r'+(S.sortK==='bs'?' sa':'')+'">B/S</div><div data-sort="ofi"'+(S.sortK==='ofi'?' class="sa"':'')+'>KLGD</div><div>OFI</div><div data-sort="cd"'+(S.sortK==='cd'?' class="sa"':'')+'>CVD</div><div class="text-c">★</div>';
+  if(w)hh='<div data-sort="sym">Mã</div><div data-sort="pct" class="text-r'+(S.sortK==='pct'?' sa':'')+'">%</div><div data-sort="bs" class="text-r'+(S.sortK==='bs'?' sa':'')+'">B/S</div><div data-sort="ofi"'+(S.sortK==='ofi'?' class="sa"':'')+'>OFI</div><div data-sort="cd"'+(S.sortK==='cd'?' class="sa"':'')+'>CVD</div><div class="text-c">★</div>';
   else hh='<div data-sort="sym">Mã</div><div data-sort="pct" class="text-r'+(S.sortK==='pct'?' sa':'')+'">%</div><div data-sort="bs" class="text-r'+(S.sortK==='bs'?' sa':'')+'">B/S</div><div data-sort="ofi"'+(S.sortK==='ofi'?' class="sa"':'')+'>OFI</div><div class="text-c">★</div>';
   document.getElementById('scanHead').className='scan-header '+cls;document.getElementById('scanHead').innerHTML=hh;
   let h='';
@@ -1069,7 +1073,6 @@ function renderScanner(){
     h+='<div class="scan-sym">'+it.sym+(div?' <span class="div-tag '+(div.type==='bull'?'bull':'bear')+'">D'+(div.type==='bull'?'↑':'↓')+'</span>':'')+'</div>';
     h+='<div class="scan-pct '+pC(it.pct)+'">'+(it.pct>=0?'+':'')+it.pct.toFixed(1)+'%</div>';
     h+='<div class="text-r '+(it.bs>55?'up-c':it.bs<45?'down-c':'ref-c')+'" style="font-size:11px">'+it.bs.toFixed(0)+'%</div>';
-    if(w){h+='<div style="font-size:11px;color:var(--text2)">'+fmt(it.vol)+'</div>'}
     h+='<div title="OFI: '+(it.ofi>=0?'+':'')+it.ofi.toFixed(0)+'%">'+ofiBarHTML(it.ofi,8)+'</div>';
     if(w){h+='<div title="CVD: '+(it.cd>=0?'+':'')+it.cd.toFixed(0)+'%">'+ofiBarHTML(it.cd,8)+'</div>'}
     h+='<div class="scan-pin'+(isPinned?' pinned':'')+'" data-pin="'+it.sym+'">'+(isPinned?'★':'☆')+'</div></div>'}
@@ -1130,24 +1133,6 @@ function renderDetail(){
       h+='<div class="div-chart-wrap"><div class="div-chart-label"><span class="title" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">Cumulative Delta — '+sym+'</span><span class="'+cdLbl.c+'" style="font-family:var(--mono);font-size:12px;font-weight:700">'+cdLbl.t+'</span></div><canvas id="cdChart" height="90" style="width:100%;border-radius:4px"></canvas></div>';
     }
 
-    // Exhaustion
-    const tr=S.trades[sym];
-    let exhLbl={t:'—',c:'ref-c'};
-    if(tr&&tr.recent.length>=5){
-      const now=Date.now();
-      const r30=tr.recent.filter(t=>now-t.t<30000);
-      const r60=tr.recent.filter(t=>now-t.t<60000&&now-t.t>=30000);
-      if(r60.length>0){
-        const sellR30=r30.filter(t=>t.side===-1).reduce((a,t)=>a+t.qty,0);
-        const sellR60=r60.filter(t=>t.side===-1).reduce((a,t)=>a+t.qty,0);
-        const buyR30=r30.filter(t=>t.side===1).reduce((a,t)=>a+t.qty,0);
-        const buyR60=r60.filter(t=>t.side===1).reduce((a,t)=>a+t.qty,0);
-        if(sellR60>0&&sellR30<sellR60*0.5)exhLbl={t:'Bán cạn',c:'up-c'};
-        else if(buyR60>0&&buyR30<buyR60*0.5)exhLbl={t:'Mua cạn',c:'down-c'};
-        else exhLbl={t:'Bình thường',c:'ref-c'};
-      }
-    }
-
     // Stats row
     h+='<div style="margin-top:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px;font-weight:600">Lệnh khớp chủ động</div></div>';
     const cdN=cdNorm(sym);
@@ -1156,7 +1141,7 @@ function renderDetail(){
     h+='<div class="dstat"><div class="label">Cumulative Delta</div><div class="val '+cdLbl.c+'">'+cdLbl.t+'</div><div class="sub">B:'+fmt(cd.buyVol)+' S:'+fmt(cd.sellVol)+'</div></div>';
     h+='<div class="dstat"><div class="label">Tỷ lệ Mua</div><div class="val '+(cdBuyPct>55?'up-c':cdBuyPct<45?'down-c':'ref-c')+'">'+cdBuyPct.toFixed(0)+'%</div>';
     h+='<div style="margin-top:4px"><div style="height:6px;border-radius:3px;background:var(--bg3);overflow:hidden"><div style="height:100%;width:'+cdBuyPct+'%;background:'+(cdBuyPct>55?'var(--green)':cdBuyPct<45?'var(--red)':'var(--text3)')+';border-radius:3px;transition:width .3s"></div></div></div></div>';
-    h+='<div class="dstat"><div class="label">Exhaustion</div><div class="val '+exhLbl.c+'">'+exhLbl.t+'</div>'+(S.sideMode!=='auto'?'<div class="sub" style="color:var(--text3)">Side: '+S.sideMode+'</div>':'')+'</div>';
+    h+='<div class="dstat"><div class="label">CVD %</div><div class="val '+cdNLbl.c+'">'+cdNLbl.t+'</div>'+(S.sideMode!=='auto'?'<div class="sub" style="color:var(--text3)">Side: '+S.sideMode+'</div>':'')+'</div>';
     h+='</div>';
   }
 
@@ -1363,7 +1348,7 @@ const LS={
       if(d.pins)S.pins=d.pins;
       if(d.sortK)S.sortK=d.sortK;
       if(d.sortA!==undefined)S.sortA=d.sortA;
-      if(d.scanWide!==undefined){S.scanWide=d.scanWide;if(S.scanWide)document.getElementById('p-orderbook').style.setProperty('--scan-w','420px');document.getElementById('scanToggle').textContent=S.scanWide?'Thu gọn':'Mở rộng'}
+      if(d.scanWide!==undefined){S.scanWide=d.scanWide;if(S.scanWide)document.getElementById('p-orderbook').style.setProperty('--scan-w','380px');document.getElementById('scanToggle').textContent=S.scanWide?'Thu gọn':'Mở rộng'}
       if(d.pinnedCompact!==undefined){S.pinnedCompact=d.pinnedCompact;document.getElementById('pinnedToggle').textContent=S.pinnedCompact?'Chi tiết':'Thu gọn'}
       // Only restore OFI data if same day and < 8h old
       if(d.date===today&&d.savedAt&&Date.now()-d.savedAt<28800000){
